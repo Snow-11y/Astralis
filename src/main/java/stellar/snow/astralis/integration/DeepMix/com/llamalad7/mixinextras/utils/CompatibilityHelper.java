@@ -1,0 +1,52 @@
+package com.llamalad7.mixinextras.utils;
+
+import com.llamalad7.mixinextras.versions.MixinVersion;
+import com.llamalad7.mixinextras.wrapper.WrapperInjectionInfo;
+import java.util.ArrayList;
+import java.util.List;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.AnnotationNode;
+import org.spongepowered.asm.mixin.injection.modify.LocalVariableDiscriminator;
+import org.spongepowered.asm.mixin.injection.struct.InjectionInfo;
+import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
+import org.spongepowered.asm.mixin.injection.struct.Target;
+import org.spongepowered.asm.mixin.refmap.IMixinContext;
+
+public class CompatibilityHelper {
+    public static RuntimeException makeInvalidInjectionException(InjectionInfo info, String message) {
+        return MixinVersion.getInstance().makeInvalidInjectionException(info, message);
+    }
+
+    public static IMixinContext getMixin(InjectionInfo info) {
+        return MixinVersion.getInstance().getMixin(info);
+    }
+
+    public static LocalVariableDiscriminator.Context makeLvtContext(InjectionInfo info, Type returnType, boolean argsOnly, Target target, AbstractInsnNode node) {
+        return MixinVersion.getInstance().makeLvtContext(info, returnType, argsOnly, target, node);
+    }
+
+    public static void preInject(InjectionInfo info) {
+        MixinVersion.getInstance().preInject(info);
+    }
+
+    public static AnnotationNode getAnnotation(InjectionInfo info) {
+        return MixinVersion.getInstance().getAnnotation(info);
+    }
+
+    public static int getOrder(InjectionInfo info) {
+        return MixinVersion.getInstance().getOrder(info);
+    }
+
+    public static List<Target> getTargets(InjectionInfo info) {
+        if (info instanceof WrapperInjectionInfo) {
+            return ((WrapperInjectionInfo)info).getSelectedTargets();
+        }
+        return new ArrayList<Target>(MixinVersion.getInstance().getTargets(info));
+    }
+
+    public static MemberInfo parseMemberInfo(String targetSelector, InjectionInfo info) {
+        return MixinVersion.getInstance().parseMemberInfo(targetSelector, info);
+    }
+}
+

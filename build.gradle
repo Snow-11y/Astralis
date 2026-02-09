@@ -1,0 +1,195 @@
+﻿﻿/**
+ * Astralis Mod - Build Configuration
+ * Minecraft 1.12.2 with RetroFuturaGradle
+ * Full Java 25 - no compromises
+ */
+
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'maven-publish'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.3'
+    id 'com.gtnewhorizons.retrofuturagradle' version '2.0.2'
+}
+
+// ============== MOD CONFIGURATION ==============
+def modId = 'astralis'
+def modName = 'Astralis'
+def modVersion = 'Winter's-Early-0.1.2'
+def rootPackage = 'stellar.snow.astralis'
+def coremodClass = 'stellar.snow.astralis.AstralisCore'
+def mixinRefmap = 'mixins.astralis.refmap.json'
+
+version = modVersion
+group = rootPackage
+
+base {
+    archivesName.set(modId)
+}
+
+// ============== JAVA CONFIGURATION ==============
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+        vendor.set(JvmVendorSpec.AZUL)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// ============== CONFIGURATIONS ==============
+configurations {
+    embed
+    implementation.extendsFrom(embed)
+}
+
+// ============== MINECRAFT CONFIGURATION ==============
+minecraft {
+    mcVersion.set('1.12.2')
+    
+    mcpMappingChannel.set('stable')
+    mcpMappingVersion.set('39')
+    
+    useDependencyAccessTransformers.set(true)
+    
+    username.set('Developer')
+    
+    // JVM arguments for runtime
+    extraRunJvmArguments.addAll([
+        "-ea:${rootPackage}",
+        '-Dmixin.hotSwap=true',
+        '-Dmixin.checks.interfaces=true',
+        '-Dmixin.debug.export=true'
+    ])
+}
+
+// ============== REPOSITORIES ==============
+    maven {
+        name = 'SpongePowered Maven'
+        url = 'https://repo.spongepowered.org/maven'
+    }
+}
+
+// ============== DEPENDENCIES ==============
+dependencies {
+    // Java 8+ compatibility shim for modern Java versions
+    patchedMinecraft 'me.eigenraven.java8unsupported:java-8-unsupported-shim:1.0.0'
+    
+    // Mixin support via MixinBooter
+    def mixin = modUtils.enableMixins('zone.rong:mixinbooter:10.2', mixinRefmap)
+    api(mixin) {
+        transitive = false
+    }
+    annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
+    annotationProcessor 'com.google.guava:guava:32.1.2-jre'
+    annotationProcessor 'com.google.code.gson:gson:2.8.9'
+    annotationProcessor(mixin) {
+        transitive = false
+    }
+}
+
+// ============== PROCESS RESOURCES ==============
+processResources {
+    inputs.property 'modId', modId
+    inputs.property 'modName', modName
+    inputs.property 'modVersion', modVersion
+
+    filesMatching(['mcmod.info', 'pack.mcmeta', 'mixins.astralis.json']) {
+        expand(
+            'mod_id': modId,
+            'mod_name': modName,
+            'mod_version': modVersion,
+            'mixin_refmap': mixinRefmap
+        )
+    }
+}
+
+// ============== JAR CONFIGURATION ==============
+jar {
+    manifest {
+        attributes(
+            'FMLCorePlugin': coremodClass,
+            'FMLCorePluginContainsFMLMod': 'true',
+            'ForceLoadAsMod': 'true',
+            'Multi-Release': 'true'
+        )
+    }
+    // Embed dependencies
+    from(provider { configurations.embed.collect { it.isDirectory() ? it : zipTree(it) } })
+}
+
+// ============== JAVA COMPILATION ==============
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    
+    if (it.name in ['compileMcLauncherJava', 'compilePatchedMcJava']) {
+        return
+    }
+    
+    // Full Java 25 - source and target
+    sourceCompatibility = 25
+    targetCompatibility = 25
+    
+    // Enable preview features
+    options.compilerArgs.addAll([
+        '--enable-preview',
+        '-parameters'
+    ])
+}
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs += ['--enable-preview']
+}
+
+tasks.withType(Test).configureEach {
+    jvmArgs += ['--enable-preview']
+}
+
+// ============== IDEA CONFIGURATION ==============
+idea {
+    module {
+        inheritOutputDirs = true
+    }
+    project {
+        settings {
+            runConfigurations {
+                "1. Run Client"(org.jetbrains.gradle.ext.Gradle) {
+                    taskNames = ["runClient"]
+                }
+                "2. Run Server"(org.jetbrains.gradle.ext.Gradle) {
+                    taskNames = ["runServer"]
+                }
+                "3. Run Obfuscated Client"(org.jetbrains.gradle.ext.Gradle) {
+                    taskNames = ["runObfClient"]
+                }
+                "4. Run Obfuscated Server"(org.jetbrains.gradle.ext.Gradle) {
+                    taskNames = ["runObfServer"]
+                }
+            }
+            compiler.javac {
+                afterEvaluate {
+                    javacAdditionalOptions = "-encoding utf8 --enable-preview"
+                    moduleJavacAdditionalOptions = [
+                        (project.name + ".main"): tasks.compileJava.options.compilerArgs.collect { '"' + it + '"' }.join(' ')
+                    ]
+                }
+            }
+        }
+    }
+}
+
+// ============== HELPER TASKS ==============
+tasks.register('prioritizeCoremods') {
+    dependsOn 'prepareObfModsFolder'
+    doLast {
+        fileTree('run/obfuscated').forEach {
+            if (it.isFile() && it.name =~ '(mixinbooter|configanytime)(-)([0-9])+\\.+([0-9])+(.jar)') {
+                it.renameTo(new File(it.parentFile, "!${it.name}"))
+            }
+        }
+    }
+}
+
+tasks.named('prepareObfModsFolder').configure {
+    finalizedBy 'prioritizeCoremods'
+}

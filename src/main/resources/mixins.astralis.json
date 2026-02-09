@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "stellar.snow.astralis.mixins",
+  "refmap": "mixins.astralis.refmap.json",
+  "target": "@env(DEFAULT)",
+  "minVersion": "0.8.5",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "MixinEntityLiving"
+  ]
+}

@@ -1,0 +1,11 @@
+[{
+	"modid": "astralis"
+    "name": "Astralis"
+	"mcversion": "1.12.2",
+	"description": "WIP",
+	"authorList": ["snow-11y"],
+	"credits": "WIP",
+	"url": "https://github.com/Snow-11y/Astralis",
+	"updateJSON": "src/main/resources/changelog.txt",
+	"logoFile": "src/main/resources/icon.jpg"
+}]
