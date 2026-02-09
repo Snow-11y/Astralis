@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/badge/Version-Winter's_Early_0.1.2-4c1d95?style=for-the-badge&logo=github&logoColor=white&labelColor=0d1117)](https://github.com/astralis)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-62a84b?style=for-the-badge&logo=minecraft&logoColor=white&labelColor=0d1117)](https://minecraft.net)
 [![Java](https://img.shields.io/badge/Java-21%2F25-f89820?style=for-the-badge&logo=openjdk&logoColor=white&labelColor=0d1117)](https://openjdk.org)
-[![Status](https://img.shields.io/badge/Status-Low%20WIP-ff6b6b?style=for-the-badge&logo=statuspage&logoColor=white&labelColor=0d1117)](https://github.com/astralis)
+[![Status](https://img.shields.io/badge/Status-Heavy%20WIP-ff6b6b?style=for-the-badge&logo=statuspage&logoColor=white&labelColor=0d1117)](https://github.com/astralis)
 
 <br/>
 
