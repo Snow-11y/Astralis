@@ -456,9 +456,9 @@ public class SnowsMessages {
     private static final String[] MESSAGES_SPICY = {
         "did it tripled/doubled your fps or it clowned me?",
         "seems CleanRoom Forked Forge + toxicity Built-in, glad i was separated",
-        "MDR is SOO great!!~, Better than CleanRoom, junking a pathetic rewrite of Forge and calling it The future of 1.12.2 Modding, PATHETIC",
-        "Rong(super)mario kicked me out CleanRoomMC's discord after a provocation~ he is too easy~, guys i've wanted to leave, they're bullies, they're toxic, incest, and other illegal behaviors, but didn't want to look like ive failed to ship my mod so ive left~! that's why Ive manipulated That idiot supermario by a simple provocative words and he kicked me out~, glad i left that trash hole",
-        "the mod will be ported to fabric + neoforge for abandoning Forge and its pet CleanRoom",
+        "MDR is SOO great!!~, Better than CleanRoom, junking a pathetic rewrite of Forge and calling it The future of 1.12.2 Modding, PATHETIC...document properly or be A TRUE loader instead of relying on daddy forge for your loader to work, loader needs a loder to work seems petty right?",
+        "Rong(super)mario kicked me out CleanRoomMC's discord after a provocation~ *he is too easy*~, guys i've wanted to leave, they're bullies, they're toxic, incest, and other illegal behaviors, but didn't want to look like ive failed to ship my mod so ive left~! that's why Ive manipulated That idiot supermario by a simple provocative words and he kicked me out~, glad i left that trash hole",
+        "the mod will be ported to fabric + neoforge for abandoning Forge and its pet CleanRoom~ heheh",
         "The mod might be abandoned for a while, until i return from the rest AFTER the first successful build",
         "Professionalism is just corporate cosplay and I refuse to participate!",
         "Stoicism is just emotional constipation change my mind!",
