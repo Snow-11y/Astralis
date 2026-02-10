@@ -1,4 +1,4 @@
-package dev.yourname.chunkanimator;
+package stellar.snow.astralis.integration.ChunkMotion;
 
 import com.google.gson.*;
 import net.minecraft.client.Minecraft;
