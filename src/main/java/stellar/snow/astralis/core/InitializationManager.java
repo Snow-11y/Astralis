@@ -46,8 +46,8 @@ import stellar.snow.astralis.integration.jit.JITHelper;
 import stellar.snow.astralis.integration.jit.JITInject;
 import stellar.snow.astralis.integration.jit.UniversalPatcher;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -56,15 +56,8 @@ import net.minecraft.client.Minecraft;
 // ========================================================================
 // PERFORMANCE ENHANCEMENTS - Java 25 + LWJGL 3.4.0
 // ========================================================================
-import java.util.concurrent.StructuredTaskScope;
 import java.util.concurrent.ConcurrentHashMap;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.function.Supplier;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
-import java.nio.ByteBuffer;
-import java.lang.foreign.*;
 
 /**
  * Central initialization manager for Astralis mod.
@@ -85,27 +78,13 @@ import java.lang.foreign.*;
  *   <li>Phase 2 (After Window): Vulkan/Metal/D3D12 with window handle</li>
  * </ul>
  * 
- * <h2>Zero-Overhead Safety System:</h2>
- * <p>Configures VulkanCallMapper's safety checks before class loading:</p>
- * <ul>
- *   <li><b>Production Mode (Default):</b> Safety disabled, JIT eliminates all safety code (0ns overhead)</li>
- *   <li><b>Development Mode:</b> Comprehensive safety checks catch memory bugs, deadlocks, GPU hangs</li>
- *   <li><b>FFI Mode:</b> Ultra-fast native tracking when safety enabled (~10-20ns vs Java's ~50-100ns)</li>
- * </ul>
- * <p>Configuration via {@code Config.isVulkanSafetyChecksEnabled()} and related settings.
- * System properties set in {@link #setupVulkanSafetySystem()} before VulkanCallMapper loads.</p>
- * 
  * <h2>Performance Enhancements (Java 25 + LWJGL 3.4.0):</h2>
  * <ul>
- *   <li>Structured concurrency with virtual threads for parallel subsystem initialization</li>
- *   <li>Arena-based memory allocation (Foreign Function & Memory API) for temporary objects</li>
- *   <li>Lock-free concurrent hash maps for configuration and reflection caching</li>
- *   <li>LWJGL MemoryStack ThreadLocal pool for zero-allocation native calls</li>
- *   <li>VarHandle-based direct memory access for atomic operations</li>
+ *   <li>Lock-free concurrent hash maps for configuration caching</li>
  *   <li>Background class preloading on virtual threads to warm up JIT compiler</li>
  *   <li>Config value caching to eliminate repeated lookups</li>
- *   <li>Lazy initialization with double-checked locking</li>
- *   <li>True zero-overhead safety checks via JIT dead code elimination</li>
+ *   <li>Cached OS detection strings to avoid repeated System.getProperty calls</li>
+ *   <li>Thread-safe initialization log with CopyOnWriteArrayList</li>
  * </ul>
  */
 public final class InitializationManager {
@@ -144,27 +123,28 @@ public final class InitializationManager {
     // PERFORMANCE ENHANCEMENTS - Java 25 + LWJGL 3.4.0
     // ========================================================================
     
-    // Arena allocator for temporary native allocations during initialization
-    private static final Arena INIT_ARENA = Arena.ofConfined();
-    
-    // ThreadLocal MemoryStack pool for zero-allocation LWJGL calls
-    private static final ThreadLocal<MemoryStack> STACK_POOL = ThreadLocal.withInitial(MemoryStack::stackPush);
-    
-    // Cache for reflection lookups to avoid repeated Class.forName() calls
-    private static final ConcurrentHashMap<String, Object> REFLECTION_CACHE = new ConcurrentHashMap<>(64);
-    
     // Cache for config values to eliminate repeated Config method calls
+    // Invalidated on Config.reload()
     private static final ConcurrentHashMap<String, Boolean> CONFIG_CACHE = new ConcurrentHashMap<>(32);
     
+    // Cached OS name (lowercase) to avoid repeated System.getProperty calls
+    private static final String OS_NAME_LOWER = System.getProperty("os.name", "").toLowerCase();
+    
     // Background class preloader - warms up JVM JIT compiler
+    // NOTE: Only preloads classes that do NOT reference InitializationManager
+    // to avoid class-loading deadlocks during static initialization.
     static {
         Thread.startVirtualThread(() -> {
             try {
                 // Preload frequently used classes in background
-                Class.forName("stellar.snow.astralis.engine.ecs.core.World");
-                Class.forName("stellar.snow.astralis.engine.gpu.authority.GPUBackendSelector");
-                Class.forName("stellar.snow.astralis.engine.gpu.authority.opengl.OpenGLBackend");
-                Class.forName("stellar.snow.astralis.api.vulkan.backend.VulkanBackend");
+                Class.forName("stellar.snow.astralis.engine.ecs.core.World", true,
+                        InitializationManager.class.getClassLoader());
+                Class.forName("stellar.snow.astralis.engine.gpu.authority.GPUBackendSelector", true,
+                        InitializationManager.class.getClassLoader());
+                Class.forName("stellar.snow.astralis.engine.gpu.authority.opengl.OpenGLBackend", true,
+                        InitializationManager.class.getClassLoader());
+                Class.forName("stellar.snow.astralis.api.vulkan.backend.VulkanBackend", true,
+                        InitializationManager.class.getClassLoader());
             } catch (Exception ignored) {
                 // Preloading is best-effort, ignore failures
             }
@@ -172,30 +152,27 @@ public final class InitializationManager {
     }
     
     /**
-     * Fast config value caching helper - eliminates repeated Config method calls
+     * Fast config value caching helper - eliminates repeated Config method calls.
+     * Cache is invalidated when {@link #invalidateConfigCache()} is called.
      */
     private static boolean getCachedConfig(String key, Supplier<Boolean> supplier) {
         return CONFIG_CACHE.computeIfAbsent(key, k -> supplier.get());
     }
     
     /**
-     * Cleanup method for arena allocator - call on shutdown
+     * Invalidate the config cache. Must be called after {@link Config#reload()}.
      */
-    public static void cleanupArena() {
-        try {
-            INIT_ARENA.close();
-        } catch (Exception e) {
-            LOGGER.warn("Failed to cleanup initialization arena", e);
-        }
+    public static void invalidateConfigCache() {
+        CONFIG_CACHE.clear();
     }
     
     // ========================================================================
     // INITIALIZATION STATE TRACKING
     // ========================================================================
     
-    // Initialization state tracking
-    private static final List<String> initializationLog = new ArrayList<>();
-    private static InitializationPhase currentPhase = InitializationPhase.NOT_STARTED;
+    // Thread-safe initialization log - accessed from virtual threads and main thread
+    private static final List<String> initializationLog = new CopyOnWriteArrayList<>();
+    private static volatile InitializationPhase currentPhase = InitializationPhase.NOT_STARTED;
     
     public enum InitializationPhase {
         NOT_STARTED,
@@ -232,15 +209,6 @@ public final class InitializationManager {
             
             // Initialize configuration system
             initializeConfig();
-            
-            // ═══════════════════════════════════════════════════════════════════════
-            // CRITICAL: Setup Vulkan safety system IMMEDIATELY after config loads
-            // This MUST happen BEFORE any code that might reference VulkanCallMapper,
-            // because VulkanCallMapper reads system properties in its static initializer.
-            // If the class loads before these properties are set, the safety flags will
-            // lock in as false (default) and never change.
-            // ═══════════════════════════════════════════════════════════════════════
-            setupVulkanSafetySystem();
             
             // Initialize common systems (both client and server)
             initializeCommonSystems();
@@ -358,16 +326,15 @@ public final class InitializationManager {
         logInit("  - Foreign Memory API: " + (Runtime.version().feature() >= 21 ? "Available" : "Not Available"));
         logInit("  - Structured Concurrency: " + (Runtime.version().feature() >= 21 ? "Available" : "Not Available"));
         logInit("  - LWJGL Version: 3.4.0");
-        logInit("  - Arena Allocator: " + (INIT_ARENA != null ? "Enabled" : "Disabled"));
         logInit("  - Config Cache Size: " + CONFIG_CACHE.size());
     }
     
     private static void validateJavaVersion() {
         String version = System.getProperty("java.version");
-        String[] parts = version.split("\\.");
+        String[] parts = version.split("[.+\\-]");
         
         int major;
-        if (parts[0].equals("1")) {
+        if (parts.length > 1 && parts[0].equals("1")) {
             major = Integer.parseInt(parts[1]);
         } else {
             major = Integer.parseInt(parts[0]);
@@ -396,7 +363,7 @@ public final class InitializationManager {
             logInit("  - Performance Profile: " + Config.getPerformanceProfile());
 
             // Log DeepMix integration status so it's visible in the init report
-            if (Config.isDeepMixEnabled()) {
+            if (getCachedConfig("deepMixEnabled", Config::isDeepMixEnabled)) {
                 logInit("  - DeepMix: ENABLED");
                 logInit("    • Early Loader: " + Config.isDeepMixUseEarlyLoader());
                 logInit("    • Late Loader:  " + Config.isDeepMixUseLateLoader());
@@ -409,7 +376,7 @@ public final class InitializationManager {
             }
 
             // Log Mini_DirtyRoom bootstrap status
-            if (Config.isMDREnabled()) {
+            if (getCachedConfig("mdrEnabled", Config::isMDREnabled)) {
                 boolean mdrDone = Mini_DirtyRoomCore.isBootstrapComplete();
                 Mini_DirtyRoomCore.EnvironmentInfo env = Mini_DirtyRoomCore.getEnvironment();
                 logInit("  - Mini_DirtyRoom: ENABLED (v" + Mini_DirtyRoomCore.VERSION + ")");
@@ -481,7 +448,7 @@ public final class InitializationManager {
         
         try {
             // Check if ECS is enabled in config
-            if (!Config.isECSEnabled()) {
+            if (!getCachedConfig("ecsEnabled", Config::isECSEnabled)) {
                 logInit("  - ECS disabled in configuration, skipping");
                 return;
             }
@@ -580,7 +547,7 @@ public final class InitializationManager {
             }
             
             // Initialize GLSL Pipeline Provider if GLSL is enabled
-            if (Config.isGLSLEnabled()) {
+            if (getCachedConfig("glslEnabled", Config::isGLSLEnabled)) {
                 try {
                     stellar.snow.astralis.api.opengl.pipeline.GLSLPipelineProvider glslProvider = 
                         new stellar.snow.astralis.api.opengl.pipeline.GLSLPipelineProvider();
@@ -657,15 +624,16 @@ public final class InitializationManager {
     }
     
     /**
-     * Check if DirectX should be initialized based on configuration
+     * Check if DirectX should be initialized based on configuration.
+     * Uses cached OS detection for performance.
      */
     private static boolean shouldInitializeDirectX() {
-        // Only on Windows
-        if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+        // Only on Windows - use cached OS name
+        if (!isWindowsOS()) {
             return false;
         }
         
-        if (!Config.isDirectXEnabled()) {
+        if (!getCachedConfig("directXEnabled", Config::isDirectXEnabled)) {
             return false;
         }
         
@@ -776,99 +744,6 @@ public final class InitializationManager {
     }
     
     /**
-     * Setup Vulkan zero-overhead safety system based on configuration.
-     * 
-     * <p><b>⚠️ CRITICAL CLASS LOADING ORDER:</b> This method is called in {@link #preInitialize()}
-     * immediately after {@link Config#initialize()} and BEFORE any code that might reference
-     * {@code VulkanCallMapper}. This timing is essential because {@code VulkanCallMapper} reads
-     * system properties in its static initialization block:</p>
-     * 
-     * <pre>{@code
-     * // Inside VulkanCallMapper class initialization:
-     * private static final boolean ENABLE_SAFETY_CHECKS = 
-     *     Boolean.getBoolean("astralis.vulkan.safety.enabled");
-     * }</pre>
-     * 
-     * <p>If {@code VulkanCallMapper} is loaded before this method runs, {@code ENABLE_SAFETY_CHECKS}
-     * will initialize to {@code false} (default) and lock that way forever as a {@code static final}
-     * field, ignoring any subsequent {@code System.setProperty()} calls.</p>
-     * 
-     * <h3>Initialization Sequence:</h3>
-     * <ol>
-     *   <li>{@link #preInitialize()} called at mod startup</li>
-     *   <li>{@link Config#initialize()} loads configuration file</li>
-     *   <li><b>THIS METHOD</b> reads config and sets system properties</li>
-     *   <li>Later: {@code VulkanCallMapper} class loaded with correct property values</li>
-     *   <li>Later: {@link #tryInitializeVulkan(long, int, int)} creates VulkanBackend</li>
-     * </ol>
-     * 
-     * <h3>Safety System Modes:</h3>
-     * <ul>
-     *   <li><b>Production (Default):</b> Safety checks disabled, JIT eliminates all safety code (0ns overhead)</li>
-     *   <li><b>Development (Java):</b> Safety checks enabled with Java tracking (~50-100ns overhead)</li>
-     *   <li><b>Development (FFI):</b> Safety checks enabled with native FFI tracking (~10-20ns overhead)</li>
-     * </ul>
-     * 
-     * <h3>Safety Features (when enabled):</h3>
-     * <ul>
-     *   <li>Memory Source Tracking: Prevents mixing LWJGL and FFM/Panama APIs (causes JVM crashes)</li>
-     *   <li>Deadlock Detection: Monitors lock acquisitions with timeouts</li>
-     *   <li>Bindless Validation: Validates descriptor array indices before GPU access</li>
-     *   <li>Leak Detection: Reports unfreed memory on shutdown</li>
-     * </ul>
-     */
-    private static void setupVulkanSafetySystem() {
-        // Read configuration values
-        boolean safetyEnabled = Config.isVulkanSafetyChecksEnabled();
-        boolean ffiTracking = Config.isVulkanSafetyFFITracking();
-        
-        // Set system properties for VulkanCallMapper to read
-        // (these become compile-time constants for JIT optimization)
-        if (safetyEnabled) {
-            System.setProperty("astralis.vulkan.safety.enabled", "true");
-            logInit("  - Vulkan Safety: ENABLED (Development Mode)");
-            
-            if (ffiTracking) {
-                System.setProperty("astralis.vulkan.ffi.tracking", "true");
-                logInit("  - Tracking Mode: FFI Native (~10-20ns overhead)");
-                logInit("  - Requires: Java 21+ with --enable-preview and --enable-native-access");
-            } else {
-                logInit("  - Tracking Mode: Java ConcurrentHashMap (~50-100ns overhead)");
-            }
-            
-            // Log which safety features are active
-            if (Config.isVulkanMemorySourceTracking()) {
-                logInit("  - Memory Source Tracking: ENABLED (prevents LWJGL/FFM mixing)");
-            }
-            if (Config.isVulkanDeadlockDetection()) {
-                logInit("  - Deadlock Detection: ENABLED (timeout: " + 
-                       Config.getVulkanDeadlockTimeoutMs() + "ms)");
-            }
-            if (Config.isVulkanBindlessValidation()) {
-                logInit("  - Bindless Validation: ENABLED (prevents GPU hangs)");
-            }
-            if (Config.isVulkanLeakDetection()) {
-                logInit("  - Leak Detection: ENABLED (reports at shutdown)");
-            }
-            
-            if (Config.isVulkanSafetyStrictMode()) {
-                logInit("  - Strict Mode: ENABLED (throws exceptions on violations)");
-            } else {
-                logInit("  - Strict Mode: DISABLED (warnings only)");
-            }
-            
-        } else {
-            // Safety disabled - this is the default production mode
-            // System properties are already not set, which means VulkanCallMapper
-            // will read ENABLE_SAFETY_CHECKS as false and JIT will eliminate all safety code
-            logInit("  - Vulkan Safety: DISABLED (Production Mode)");
-            logInit("  - Overhead: 0 nanoseconds (true zero overhead via JIT dead code elimination)");
-            logInit("  - All safety checks compiled out for maximum performance");
-            logInit("  - To enable for development, set: vulkanSafetyChecksEnabled = true in config");
-        }
-    }
-    
-    /**
      * Attempt to initialize Vulkan backend
      * 
      * @return true if successful, false otherwise
@@ -876,11 +751,6 @@ public final class InitializationManager {
     private static boolean tryInitializeVulkan(long windowHandle, int width, int height) {
         try {
             logInit("  - Attempting Vulkan initialization...");
-            
-            // Note: Vulkan safety system was already configured in preInitialize()
-            // before any classes that reference VulkanCallMapper were loaded.
-            // System properties are now set and VulkanCallMapper's static final
-            // fields have been initialized with the correct values.
             
             // Create Vulkan backend instance
             VulkanBackend vkBackend = new VulkanBackend();
@@ -979,8 +849,8 @@ public final class InitializationManager {
             } catch (Exception ignored) {}
 
             // ── Texture pipeline flags ────────────────────────────────────────────────────
-            boolean ktx2Active       = Config.isVulkanEnableKTX2Pipeline();
-            boolean computeMipmaps   = Config.isVulkanEnableComputeMipmaps();
+            boolean ktx2Active       = getCachedConfig("vulkanKTX2Pipeline", Config::isVulkanEnableKTX2Pipeline);
+            boolean computeMipmaps   = getCachedConfig("vulkanComputeMipmaps", Config::isVulkanEnableComputeMipmaps);
 
             // ── VRS flags ────────────────────────────────────────────────────────────────
             boolean vrsPrimitive     = extSet.contains("VK_KHR_fragment_shading_rate");
@@ -1034,6 +904,8 @@ public final class InitializationManager {
             );
 
             // ── Re-validate Config against the now-populated capabilities ─────────────────
+            // Invalidate config cache before reload so stale values are cleared
+            invalidateConfigCache();
             Config.reload();
 
             logInit("    - UniversalCapabilities.Vulkan updated");
@@ -1042,22 +914,6 @@ public final class InitializationManager {
             LOGGER.error("Failed to update UniversalCapabilities from Vulkan backend", e);
             logInit("    - UniversalCapabilities.Vulkan update failed: " + e.getMessage());
         }
-    }
-
-    /**
-     * Check if DirectX should be initialized based on config
-     */
-    private static boolean shouldInitializeDirectX() {
-        // Only on Windows
-        if (!isWindowsOS()) {
-            return false;
-        }
-        
-        Config.PreferredAPI preferredAPI = Config.getPreferredAPI();
-        return preferredAPI == Config.PreferredAPI.DIRECTX ||
-               preferredAPI == Config.PreferredAPI.DIRECTX11 ||
-               preferredAPI == Config.PreferredAPI.DIRECTX12 ||
-               (preferredAPI == Config.PreferredAPI.AUTO && Config.isDirectXEnabled());
     }
     
     /**
@@ -1284,19 +1140,17 @@ public final class InitializationManager {
     }
     
     /**
-     * Check if running on Windows OS
+     * Check if running on Windows OS. Uses cached OS name for performance.
      */
     private static boolean isWindowsOS() {
-        String os = System.getProperty("os.name").toLowerCase();
-        return os.contains("win");
+        return OS_NAME_LOWER.contains("win");
     }
     
     /**
-     * Check if running on macOS
+     * Check if running on macOS. Uses cached OS name for performance.
      */
     private static boolean isMacOS() {
-        String os = System.getProperty("os.name").toLowerCase();
-        return os.contains("mac") || os.contains("darwin");
+        return OS_NAME_LOWER.contains("mac") || OS_NAME_LOWER.contains("darwin");
     }
     
     /**
@@ -1357,7 +1211,7 @@ public final class InitializationManager {
                 metalPipeline.set(mtlPipeline);
                 
                 // Initialize MSL (Metal Shading Language) pipeline if enabled
-                if (Config.isMSLEnabled()) {
+                if (getCachedConfig("mslEnabled", Config::isMSLEnabled)) {
                     try {
                         stellar.snow.astralis.api.metal.pipeline.MSLPipelineProvider mslProvider = 
                             stellar.snow.astralis.api.metal.pipeline.MSLPipelineProvider.getInstance(mtlManager);
@@ -1480,8 +1334,8 @@ public final class InitializationManager {
             OpenGLESPipelineProvider glesPipeline = new OpenGLESPipelineProvider(glesManager);
             openGLESPipeline.set(glesPipeline);
             
-            GLSLESPipelineProvider glslPipeline = new GLSLESPipelineProvider(glesManager);
-            glslesPipeline.set(glslPipeline);
+            GLSLESPipelineProvider glslPipelineLocal = new GLSLESPipelineProvider(glesManager);
+            glslesPipeline.set(glslPipelineLocal);
             
             logInit("    - OpenGL ES Manager created");
             logInit("    - OpenGL ES version: " + glesMajor + "." + glesMinor);
@@ -1504,7 +1358,7 @@ public final class InitializationManager {
         
         try {
             // Check if ECS bridge is enabled
-            if (!Config.isECSMinecraftBridgeEnabled()) {
+            if (!getCachedConfig("ecsBridgeEnabled", Config::isECSMinecraftBridgeEnabled)) {
                 logInit("  - ECS Bridge disabled in configuration, skipping");
                 return;
             }
@@ -1575,7 +1429,7 @@ public final class InitializationManager {
             }
             
             // Initialize Circuit Breaker (if enabled)
-            if (Config.isBridgeCircuitBreakerEnabled()) {
+            if (getCachedConfig("circuitBreakerEnabled", Config::isBridgeCircuitBreakerEnabled)) {
                 stellar.snow.astralis.bridge.CircuitBreaker circuitBreaker = 
                     new stellar.snow.astralis.bridge.CircuitBreaker(
                         Config.getBridgeCircuitBreakerFailureThreshold(),
@@ -1588,7 +1442,7 @@ public final class InitializationManager {
             }
             
             // Initialize Interpolation System (if enabled)
-            if (Config.isBridgeInterpolationEnabled()) {
+            if (getCachedConfig("interpolationEnabled", Config::isBridgeInterpolationEnabled)) {
                 stellar.snow.astralis.bridge.InterpolationSystem interpolation = 
                     new stellar.snow.astralis.bridge.InterpolationSystem(bridge);
                 world.addSystem(interpolation);
@@ -1597,7 +1451,7 @@ public final class InitializationManager {
             }
             
             // Initialize Sync Systems (if enabled)
-            if (Config.isBridgeSyncSystemsEnabled()) {
+            if (getCachedConfig("syncSystemsEnabled", Config::isBridgeSyncSystemsEnabled)) {
                 stellar.snow.astralis.bridge.SyncSystems.InboundSyncSystem inboundSync = 
                     new stellar.snow.astralis.bridge.SyncSystems.InboundSyncSystem(bridge);
                 stellar.snow.astralis.bridge.SyncSystems.OutboundSyncSystem outboundSync = 
@@ -1629,14 +1483,14 @@ public final class InitializationManager {
             
             if (backend != null && world != null) {
                 // Initialize Render Graph System (if enabled)
-                if (Config.isRenderGraphEnabled()) {
+                if (getCachedConfig("renderGraphEnabled", Config::isRenderGraphEnabled)) {
                     logInit("  - Render Graph: Initializing...");
                     // Render graph will be initialized on-demand by render systems
                     logInit("    ✓ Render graph ready");
                 }
                 
                 // Initialize Render System (if enabled)
-                if (Config.isRenderSystemEnabled()) {
+                if (getCachedConfig("renderSystemEnabled", Config::isRenderSystemEnabled)) {
                     logInit("  - Render System: Initializing...");
                     stellar.snow.astralis.render.system.RenderSystem renderSystem = 
                         new stellar.snow.astralis.render.system.RenderSystem();
@@ -1644,7 +1498,7 @@ public final class InitializationManager {
                 }
                 
                 // Initialize Render Bridge (if enabled)
-                if (Config.isRenderBridgeEnabled()) {
+                if (getCachedConfig("renderBridgeEnabled", Config::isRenderBridgeEnabled)) {
                     logInit("  - Render Bridge: Initializing...");
                     stellar.snow.astralis.render.system.RenderBridge renderBridge = 
                         new stellar.snow.astralis.render.system.RenderBridge();
@@ -1655,7 +1509,7 @@ public final class InitializationManager {
                 }
                 
                 // Initialize CullingManager (if enabled)
-                if (Config.isCullingManagerEnabled()) {
+                if (getCachedConfig("cullingManagerEnabled", Config::isCullingManagerEnabled)) {
                     CullingManager culling = CullingManager.getInstance();
                     cullingManager.set(culling);
                     logInit("  - Culling Manager: OK (singleton)");
@@ -1666,7 +1520,7 @@ public final class InitializationManager {
                 }
                 
                 // Initialize IndirectDrawManager (if enabled)
-                if (Config.isIndirectDrawEnabled()) {
+                if (getCachedConfig("indirectDrawEnabled", Config::isIndirectDrawEnabled)) {
                     IndirectDrawManager indirectDraw = new IndirectDrawManager();
                     indirectDrawManager.set(indirectDraw);
                     logInit("  - Indirect Draw Manager: OK");
@@ -1675,7 +1529,7 @@ public final class InitializationManager {
                 }
                 
                 // Initialize ResolutionManager (if enabled)
-                if (Config.isResolutionManagerEnabled()) {
+                if (getCachedConfig("resolutionManagerEnabled", Config::isResolutionManagerEnabled)) {
                     ResolutionManager resolution = new ResolutionManager();
                     resolutionManager.set(resolution);
                     logInit("  - Resolution Manager: OK");
@@ -1687,7 +1541,7 @@ public final class InitializationManager {
                 }
                 
                 // Initialize Draw Pool (if enabled)
-                if (Config.isDrawPoolEnabled()) {
+                if (getCachedConfig("drawPoolEnabled", Config::isDrawPoolEnabled)) {
                     logInit("  - Draw Pool: Initializing...");
                     stellar.snow.astralis.scheduling.DrawPool drawPool = 
                         new stellar.snow.astralis.scheduling.DrawPool(
@@ -1712,10 +1566,10 @@ public final class InitializationManager {
     }
     
     private static void printGPUInfo() {
-        if (activeGPUBackend.get() != null) {
+        GPUBackend backend = activeGPUBackend.get();
+        if (backend != null) {
             try {
                 logInit("=== GPU INFORMATION ===");
-                GPUBackend backend = activeGPUBackend.get();
                 logInit("  - Active Backend: " + backend.getClass().getSimpleName());
                 
                 if (backend instanceof VulkanBackend vk) {
@@ -1737,12 +1591,12 @@ public final class InitializationManager {
         boolean valid = true;
 
         // Confirm DeepMix wired up correctly (non-fatal — just informational)
-        if (Config.isDeepMixEnabled()) {
+        if (getCachedConfig("deepMixEnabled", Config::isDeepMixEnabled)) {
             logInit("  - DeepMix loader: OK (mixins.astralis.json registered early)");
         }
 
         // Confirm Mini_DirtyRoom bootstrap completed and LWJGL override is live
-        if (Config.isMDREnabled()) {
+        if (getCachedConfig("mdrEnabled", Config::isMDREnabled)) {
             if (Mini_DirtyRoomCore.isBootstrapComplete()) {
                 int redirects = Mini_DirtyRoomCore.getClassRedirects().size();
                 logInit("  - Mini_DirtyRoom: OK ("
@@ -1770,8 +1624,9 @@ public final class InitializationManager {
         Side side = FMLCommonHandler.instance().getSide();
         if (side.isClient()) {
             // GPU backend is optional (can fall back to basic rendering)
-            if (activeGPUBackend.get() != null) {
-                logInit("  - GPU Backend: OK (" + activeGPUBackend.get().getClass().getSimpleName() + ")");
+            GPUBackend backend = activeGPUBackend.get();
+            if (backend != null) {
+                logInit("  - GPU Backend: OK (" + backend.getClass().getSimpleName() + ")");
             } else {
                 LOGGER.warn("  - GPU Backend: MISSING (using fallback)");
             }
@@ -1785,7 +1640,7 @@ public final class InitializationManager {
             }
             
             // Rendering managers optional if no GPU backend
-            if (activeGPUBackend.get() != null) {
+            if (backend != null) {
                 if (cullingManager.get() != null) {
                     logInit("  - Culling Manager: OK");
                 }
@@ -1989,10 +1844,10 @@ public final class InitializationManager {
                 }
             }
             
-            logInit("Shutdown complete");
+            // Clear caches
+            CONFIG_CACHE.clear();
             
-            // Clean up performance enhancement resources
-            cleanupArena();
+            logInit("Shutdown complete");
             
         } catch (Exception e) {
             LOGGER.error("Error during shutdown", e);
@@ -2104,11 +1959,13 @@ public final class InitializationManager {
     }
     
     public static boolean isDirectXActive() {
-        return directXManager.get() != null && directXManager.get().isInitialized();
+        DirectXManager dm = directXManager.get();
+        return dm != null && dm.isInitialized();
     }
     
     public static boolean isMetalActive() {
-        return metalManager.get() != null && metalManager.get().isInitialized();
+        stellar.snow.astralis.api.metal.managers.MetalManager mm = metalManager.get();
+        return mm != null && mm.isInitialized();
     }
     
     public static boolean isOpenGLESActive() {
@@ -2126,56 +1983,66 @@ public final class InitializationManager {
         logInit("Initializing integration modules (PreInit)...");
         
         try {
+            int enabledCount = 0;
+            
             // PhotonEngine - Light-speed rendering optimizations
-            if (Config.isPhotonEngineEnabled()) {
+            if (getCachedConfig("photonEngine", Config::isPhotonEngineEnabled)) {
                 PhotonEngine.preInit();
                 logInit("  - PhotonEngine: initialized");
+                enabledCount++;
             }
             
             // ShortStack - Recipe optimization
-            if (Config.isShortStackEnabled()) {
+            if (getCachedConfig("shortStack", Config::isShortStackEnabled)) {
                 ShortStackMod.preInit();
                 logInit("  - ShortStack: initialized");
+                enabledCount++;
             }
             
             // Neon - Advanced optimizations
-            if (Config.isNeonEnabled()) {
+            if (getCachedConfig("neon", Config::isNeonEnabled)) {
                 Neon.preInit();
                 logInit("  - Neon: initialized");
+                enabledCount++;
             }
             
             // AllTheLeaksReborn - Memory leak fixes
-            if (Config.isAllTheLeaksEnabled()) {
+            if (getCachedConfig("allTheLeaks", Config::isAllTheLeaksEnabled)) {
                 AllTheLeaksReborn.preInit();
                 logInit("  - AllTheLeaksReborn: initialized");
+                enabledCount++;
             }
             
             // BlueCore - Core optimizations
-            if (Config.isBlueCoreEnabled()) {
+            if (getCachedConfig("blueCore", Config::isBlueCoreEnabled)) {
                 BlueCore.preInit();
                 logInit("  - BlueCore: initialized");
+                enabledCount++;
             }
             
             // Bolt - Performance enhancements
-            if (Config.isBoltEnabled()) {
+            if (getCachedConfig("bolt", Config::isBoltEnabled)) {
                 Bolt.preInit();
                 logInit("  - Bolt: initialized");
+                enabledCount++;
             }
             
             // ChunkMotion - Chunk animation
-            if (Config.isChunkMotionEnabled()) {
+            if (getCachedConfig("chunkMotion", Config::isChunkMotionEnabled)) {
                 ChunkAnimator.preInit();
                 logInit("  - ChunkMotion: initialized");
+                enabledCount++;
             }
             
             // GoodOptimizations - General optimizations
-            if (Config.isGoodOptEnabled()) {
+            if (getCachedConfig("goodOpt", Config::isGoodOptEnabled)) {
                 GoodOptimzations.preInit();
                 logInit("  - GoodOptimizations: initialized");
+                enabledCount++;
             }
             
             // Haku - EXPERIMENTAL (with warning)
-            if (Config.isHakuEnabled()) {
+            if (getCachedConfig("haku", Config::isHakuEnabled)) {
                 if (!Config.isHakuWarningAcknowledged()) {
                     LOGGER.warn("╔════════════════════════════════════════════════════════════════╗");
                     LOGGER.warn("║  WARNING: Haku is EXTREMELY EXPERIMENTAL and NOT RECOMMENDED ║");
@@ -2185,10 +2052,11 @@ public final class InitializationManager {
                 }
                 Haku.preInit();
                 logInit("  - Haku: initialized (EXPERIMENTAL - use at own risk)");
+                enabledCount++;
             }
             
             // Lavender - OptiFine compatibility (with legal warning)
-            if (Config.isLavenderEnabled()) {
+            if (getCachedConfig("lavender", Config::isLavenderEnabled)) {
                 if (!Config.isLavenderLegalNoticeShown()) {
                     LOGGER.warn("╔════════════════════════════════════════════════════════════════╗");
                     LOGGER.warn("║  WARNING: Lavender - OptiFine Compatibility Layer             ║");
@@ -2201,46 +2069,53 @@ public final class InitializationManager {
                 }
                 Lavender.preInit();
                 logInit("  - Lavender: initialized (NOT RECOMMENDED - limited compatibility)");
+                enabledCount++;
             }
             
             // Lumen - Lighting optimizations
-            if (Config.isLumenEnabled()) {
+            if (getCachedConfig("lumen", Config::isLumenEnabled)) {
                 Lumen.preInit();
                 logInit("  - Lumen: initialized");
+                enabledCount++;
             }
             
             // MagnetismCore - Physics optimizations
-            if (Config.isMagnetismCoreEnabled()) {
+            if (getCachedConfig("magnetismCore", Config::isMagnetismCoreEnabled)) {
                 MagnetismCore.preInit();
                 logInit("  - MagnetismCore: initialized");
+                enabledCount++;
             }
             
             // Asto - Modern VintageFix rewrite (Java 25)
-            if (Config.isAstoEnabled()) {
+            if (getCachedConfig("asto", Config::isAstoEnabled)) {
                 Asto.initializeAll(); // Asto uses initializeAll() instead of preInit
                 logInit("  - Asto: initialized (VintageFix rewrite)");
+                enabledCount++;
             }
             
             // Fluorine - Additional optimizations
-            if (Config.isFluorineEnabled()) {
+            if (getCachedConfig("fluorine", Config::isFluorineEnabled)) {
                 Fluorine.preInit();
                 logInit("  - Fluorine: initialized");
+                enabledCount++;
             }
             
             // LegacyFix - Legacy compatibility
-            if (Config.isLegacyFixEnabled()) {
+            if (getCachedConfig("legacyFix", Config::isLegacyFixEnabled)) {
                 LegacyFix.preInit();
                 logInit("  - LegacyFix: initialized");
+                enabledCount++;
             }
             
             // SnowyASM - Advanced memory optimization
-            if (Config.isSnowyASMEnabled()) {
+            if (getCachedConfig("snowyASM", Config::isSnowyASMEnabled)) {
                 SnowyASM.preInit();
                 logInit("  - SnowyASM: initialized (memory optimizer)");
+                enabledCount++;
             }
             
             // JIT Optimization System
-            if (Config.isJITEnabled()) {
+            if (getCachedConfig("jit", Config::isJITEnabled)) {
                 if (Config.isJITHelperEnabled()) {
                     JITHelper.initialize();
                 }
@@ -2251,27 +2126,8 @@ public final class InitializationManager {
                     UniversalPatcher.initialize();
                 }
                 logInit("  - JIT System: initialized (bytecode optimizer)");
+                enabledCount++;
             }
-            
-            // Log if no integrations are enabled
-            int enabledCount = 0;
-            if (Config.isPhotonEngineEnabled()) enabledCount++;
-            if (Config.isShortStackEnabled()) enabledCount++;
-            if (Config.isNeonEnabled()) enabledCount++;
-            if (Config.isAllTheLeaksEnabled()) enabledCount++;
-            if (Config.isBlueCoreEnabled()) enabledCount++;
-            if (Config.isBoltEnabled()) enabledCount++;
-            if (Config.isChunkMotionEnabled()) enabledCount++;
-            if (Config.isGoodOptEnabled()) enabledCount++;
-            if (Config.isHakuEnabled()) enabledCount++;
-            if (Config.isLavenderEnabled()) enabledCount++;
-            if (Config.isLumenEnabled()) enabledCount++;
-            if (Config.isMagnetismCoreEnabled()) enabledCount++;
-            if (Config.isAstoEnabled()) enabledCount++;
-            if (Config.isFluorineEnabled()) enabledCount++;
-            if (Config.isLegacyFixEnabled()) enabledCount++;
-            if (Config.isSnowyASMEnabled()) enabledCount++;
-            if (Config.isJITEnabled()) enabledCount++;
             
             if (enabledCount == 0) {
                 logInit("  - No integration modules enabled (all disabled by default)");
@@ -2292,22 +2148,22 @@ public final class InitializationManager {
         logInit("Initializing integration modules (Init)...");
         
         try {
-            if (Config.isPhotonEngineEnabled()) PhotonEngine.init();
-            if (Config.isShortStackEnabled()) ShortStackMod.init();
-            if (Config.isNeonEnabled()) Neon.init();
-            if (Config.isAllTheLeaksEnabled()) AllTheLeaksReborn.init();
-            if (Config.isBlueCoreEnabled()) BlueCore.init();
-            if (Config.isBoltEnabled()) Bolt.init();
-            if (Config.isChunkMotionEnabled()) ChunkAnimator.init();
-            if (Config.isGoodOptEnabled()) GoodOptimzations.init();
-            if (Config.isHakuEnabled()) Haku.init();
-            if (Config.isLavenderEnabled()) Lavender.init();
-            if (Config.isLumenEnabled()) Lumen.init();
-            if (Config.isMagnetismCoreEnabled()) MagnetismCore.init();
+            if (getCachedConfig("photonEngine", Config::isPhotonEngineEnabled)) PhotonEngine.init();
+            if (getCachedConfig("shortStack", Config::isShortStackEnabled)) ShortStackMod.init();
+            if (getCachedConfig("neon", Config::isNeonEnabled)) Neon.init();
+            if (getCachedConfig("allTheLeaks", Config::isAllTheLeaksEnabled)) AllTheLeaksReborn.init();
+            if (getCachedConfig("blueCore", Config::isBlueCoreEnabled)) BlueCore.init();
+            if (getCachedConfig("bolt", Config::isBoltEnabled)) Bolt.init();
+            if (getCachedConfig("chunkMotion", Config::isChunkMotionEnabled)) ChunkAnimator.init();
+            if (getCachedConfig("goodOpt", Config::isGoodOptEnabled)) GoodOptimzations.init();
+            if (getCachedConfig("haku", Config::isHakuEnabled)) Haku.init();
+            if (getCachedConfig("lavender", Config::isLavenderEnabled)) Lavender.init();
+            if (getCachedConfig("lumen", Config::isLumenEnabled)) Lumen.init();
+            if (getCachedConfig("magnetismCore", Config::isMagnetismCoreEnabled)) MagnetismCore.init();
             // Note: Asto uses initializeAll() in preInit, no separate init
-            if (Config.isFluorineEnabled()) Fluorine.init();
-            if (Config.isLegacyFixEnabled()) LegacyFix.init();
-            if (Config.isSnowyASMEnabled()) SnowyASM.init();
+            if (getCachedConfig("fluorine", Config::isFluorineEnabled)) Fluorine.init();
+            if (getCachedConfig("legacyFix", Config::isLegacyFixEnabled)) LegacyFix.init();
+            if (getCachedConfig("snowyASM", Config::isSnowyASMEnabled)) SnowyASM.init();
             // JIT system initialized in preInit
             
             logInit("  - All enabled integration modules initialized");
@@ -2324,22 +2180,22 @@ public final class InitializationManager {
         logInit("Initializing integration modules (PostInit)...");
         
         try {
-            if (Config.isPhotonEngineEnabled()) PhotonEngine.postInit();
-            if (Config.isShortStackEnabled()) ShortStackMod.postInit();
-            if (Config.isNeonEnabled()) Neon.postInit();
-            if (Config.isAllTheLeaksEnabled()) AllTheLeaksReborn.postInit();
-            if (Config.isBlueCoreEnabled()) BlueCore.postInit();
-            if (Config.isBoltEnabled()) Bolt.postInit();
-            if (Config.isChunkMotionEnabled()) ChunkAnimator.postInit();
-            if (Config.isGoodOptEnabled()) GoodOptimzations.postInit();
-            if (Config.isHakuEnabled()) Haku.postInit();
-            if (Config.isLavenderEnabled()) Lavender.postInit();
-            if (Config.isLumenEnabled()) Lumen.postInit();
-            if (Config.isMagnetismCoreEnabled()) MagnetismCore.postInit();
+            if (getCachedConfig("photonEngine", Config::isPhotonEngineEnabled)) PhotonEngine.postInit();
+            if (getCachedConfig("shortStack", Config::isShortStackEnabled)) ShortStackMod.postInit();
+            if (getCachedConfig("neon", Config::isNeonEnabled)) Neon.postInit();
+            if (getCachedConfig("allTheLeaks", Config::isAllTheLeaksEnabled)) AllTheLeaksReborn.postInit();
+            if (getCachedConfig("blueCore", Config::isBlueCoreEnabled)) BlueCore.postInit();
+            if (getCachedConfig("bolt", Config::isBoltEnabled)) Bolt.postInit();
+            if (getCachedConfig("chunkMotion", Config::isChunkMotionEnabled)) ChunkAnimator.postInit();
+            if (getCachedConfig("goodOpt", Config::isGoodOptEnabled)) GoodOptimzations.postInit();
+            if (getCachedConfig("haku", Config::isHakuEnabled)) Haku.postInit();
+            if (getCachedConfig("lavender", Config::isLavenderEnabled)) Lavender.postInit();
+            if (getCachedConfig("lumen", Config::isLumenEnabled)) Lumen.postInit();
+            if (getCachedConfig("magnetismCore", Config::isMagnetismCoreEnabled)) MagnetismCore.postInit();
             // Note: Asto uses initializeAll() in preInit, no separate postInit
-            if (Config.isFluorineEnabled()) Fluorine.postInit();
-            if (Config.isLegacyFixEnabled()) LegacyFix.postInit();
-            if (Config.isSnowyASMEnabled()) SnowyASM.postInit();
+            if (getCachedConfig("fluorine", Config::isFluorineEnabled)) Fluorine.postInit();
+            if (getCachedConfig("legacyFix", Config::isLegacyFixEnabled)) LegacyFix.postInit();
+            if (getCachedConfig("snowyASM", Config::isSnowyASMEnabled)) SnowyASM.postInit();
             // JIT system initialized in preInit
             
             logInit("  - All enabled integration modules post-initialized");
