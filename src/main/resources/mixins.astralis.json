@@ -1,11 +1,68 @@
 {
   "required": true,
+  "minVersion": "0.8",
   "package": "stellar.snow.astralis.mixins",
-  "refmap": "mixins.astralis.refmap.json",
-  "target": "@env(DEFAULT)",
-  "minVersion": "0.8.5",
   "compatibilityLevel": "JAVA_21",
+  "refmap": "astralis.refmap.json",
+  "verbose": false,
+  "priority": 1000,
   "mixins": [
-    "MixinEntityLiving"
-  ]
+    "MixinUniversalPatcher"
+  ],
+  "client": [
+    "core.MixinEntity",
+    "core.MixinWorld",
+    "core.MixinMinecraft",
+    "core.MixinGameRenderer",
+    "core.MixinCrashReport",
+    "render.MixinRenderManager",
+    "render.MixinTessellator",
+    "render.MixinMinecraft_Display",
+    "ai.MixinEntityAITasks",
+    "ai.MixinEntityLiving",
+    "ai.MixinPathNavigate",
+    "compat.HandlerBridge",
+    "integration.photonengine.MixinBufferBuilder",
+    "integration.photonengine.MixinVertexBuffer",
+    "integration.photonengine.MixinFontRenderer",
+    "integration.photonengine.MixinTextureAtlas",
+    "integration.shortstack.MixinCraftingManager",
+    "integration.shortstack.MixinRecipeBook",
+    "integration.neon.MixinChunkRenderDispatcher",
+    "integration.neon.MixinRenderChunk",
+    "integration.leaks.MixinMemoryTracker",
+    "integration.leaks.MixinResourceManager",
+    "integration.bluecore.MixinCoreOptimizations",
+    "integration.bolt.MixinThreadOptimizations",
+    "integration.chunkmotion.MixinChunkRenderer",
+    "integration.chunkmotion.MixinChunkAnimation",
+    "integration.goodopt.MixinGeneralOptimizations",
+    "integration.haku.MixinHakuCore",
+    "integration.lavender.MixinLavenderCore",
+    "integration.lumen.MixinLightingEngine",
+    "integration.lumen.MixinBlockLight",
+    "integration.magnetism.MixinPhysicsCore",
+    "integration.asto.MixinResourceLoading",
+    "integration.asto.MixinTextureAtlas",
+    "integration.asto.MixinChunkMeshing",
+    "integration.asto.MixinModelBaking",
+    "integration.fluorine.MixinRenderOptimizations",
+    "integration.fluorine.MixinMemoryOptimizations",
+    "integration.legacyfix.MixinCompatibilityFixes",
+    "integration.legacyfix.MixinCrashPrevention",
+    "integration.snowyasm.MixinStringDeduplication",
+    "integration.snowyasm.MixinZeroAllocation",
+    "integration.jit.MixinBytecodeOptimization",
+    "integration.jit.MixinUniversalPatcher"
+  ],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1,
+    "maxShiftBy": 5
+  },
+  "overwrites": {
+    "conformVisibility": true
+  },
+  "plugin": "stellar.snow.astralis.mixins.AstralisMixinPlugin",
+  "deepMixPlugin": "stellar.snow.astralis.integration.DeepMix.DeepMixStabilizer"
 }
