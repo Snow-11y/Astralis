@@ -9,7 +9,8 @@ package stellar.snow.astralis.api.directx.mapping;
 import it.unimi.dsi.fastutil.chars.CharArrayList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.objects.*;
+
+import org.apache.logging.log4j.Logger;import it.unimi.dsi.fastutil.objects.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

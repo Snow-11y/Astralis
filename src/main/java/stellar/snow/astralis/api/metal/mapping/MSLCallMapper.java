@@ -1,8 +1,9 @@
 package stellar.snow.astralis.api.metal.mapping;
 
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import net.minecraft.client.Minecraft;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -49,7 +50,7 @@ import java.util.stream.Collectors;
  */
 public final class MSLCallMapper implements AutoCloseable {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger("Minecraft-Metal-MSL");
+    private static final Logger LOGGER = LogManager.getLogger("Astralis-Metal-MSL");
     
     // ════════════════════════════════════════════════════════════════════════════
     // SECTION 1: MSL VERSION MANAGEMENT

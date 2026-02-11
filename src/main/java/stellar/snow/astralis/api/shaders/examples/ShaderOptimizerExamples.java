@@ -2,7 +2,9 @@ package stellar.snow.astralis.examples;
 
 import stellar.snow.astralis.api.shaders.AstralisShaderSystem;
 import stellar.snow.astralis.api.shaders.optimizer.ShaderOptimizer;
-import stellar.snow.astralis.api.shaders.optimizer.ShaderOptimizer.*;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.World;import stellar.snow.astralis.api.shaders.optimizer.ShaderOptimizer.*;
 import stellar.snow.astralis.engine.gpu.authority.GPUBackend;
 
 import java.nio.ByteBuffer;

@@ -55,7 +55,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
+
+import org.apache.logging.log4j.Logger;/**
  * ╔══════════════════════════════════════════════════════════════════════════════════╗
  * ║                      GLSL ES SHADER PIPELINE PROVIDER v2.0                       ║
  * ║                                                                                  ║

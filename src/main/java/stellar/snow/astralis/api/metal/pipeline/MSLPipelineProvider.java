@@ -13,8 +13,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -46,7 +46,7 @@ import java.util.function.Supplier;
  * ╔══════════════════════════════════════════════════════════════════════════════════╗
  * ║                          MSL SHADER PIPELINE PROVIDER                            ║
  * ║                                                                                  ║
- * ║  Senior Architect Grade Implementation v2.0                                      ║
+ * ║                                        ║
  * ║  Java 25 | LWJGL 3.3.6 | Safety Critical | Performance First                     ║
  * ║                                                                                  ║
  * ║  FUNCTIONALITY:                                                                  ║
@@ -91,7 +91,7 @@ import java.util.function.Supplier;
  */
 public final class MSLPipelineProvider implements AutoCloseable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MSLPipelineProvider.class);
+    private static final Logger LOGGER = LogManager.getLogger(MSLPipelineProvider.class);
 
     // ════════════════════════════════════════════════════════════════════════════
     // CONSTANTS

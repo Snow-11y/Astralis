@@ -1,7 +1,14 @@
 package stellar.snow.astralis.api.directx.mapping;
 
 // ═══════════════════════════════════════════════════════════════════════════════════
-// ██ LWJGL BGFX: Core API & Static Imports
+// Astralis Internal Imports
+// ═══════════════════════════════════════════════════════════════════════════════════
+import stellar.snow.astralis.config.Config;
+import stellar.snow.astralis.engine.gpu.authority.UniversalCapabilities;
+import stellar.snow.astralis.api.directx.managers.DirectXManager;
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// ██ LWJGL 3.4.0 BGFX: Core API & Static Imports
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 import org.lwjgl.bgfx.*;
@@ -42,20 +49,24 @@ import org.lwjgl.bgfx.BGFXCallbackInterface;
 import org.lwjgl.bgfx.BGFXReleaseFunctionCallback;
 
 // ═══════════════════════════════════════════════════════════════════════════════════
-// ██ LWJGL System & Memory Management
+// ██ LWJGL 3.4.0 System & Memory Management
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.NativeResource;
 import org.lwjgl.system.Platform;
+import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryStack.*;
 
 // ═══════════════════════════════════════════════════════════════════════════════════
-// ██ Java Foreign Function & Memory API (Panama FFI)
+// ██ Java 25 Foreign Function & Memory API (Panama FFI)
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 import java.lang.foreign.*;
 import java.lang.invoke.*;
+import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.MemoryLayout.*;
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 // ██ Java NIO: Buffers & Byte Order

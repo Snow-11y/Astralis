@@ -39,8 +39,8 @@ package stellar.snow.astralis.api.metal.mapping;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.lang.foreign.*;
 import java.lang.invoke.*;
@@ -80,7 +80,7 @@ import java.util.stream.*;
  */
 public final class MetalCallMapper implements AutoCloseable {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetalCallMapper.class);
+    private static final Logger LOGGER = LogManager.getLogger(MetalCallMapper.class);
     
     // ════════════════════════════════════════════════════════════════════════════
     // SECTION 1: OPENGL CONSTANTS (Comprehensive)

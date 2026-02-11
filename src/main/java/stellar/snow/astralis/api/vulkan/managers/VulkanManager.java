@@ -3,7 +3,8 @@ package stellar.snow.astralis.api.vulkan.managers;
 import stellar.snow.astralis.Config;
 import stellar.snow.astralis.Astralis;
 import stellar.snow.astralis.api.vulkan.mapping.VulkanCallMapper;
-import stellar.snow.astralis.nexus.vulkan.buffer.ops.*;
+
+import net.minecraft.client.Minecraft;import stellar.snow.astralis.nexus.vulkan.buffer.ops.*;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

@@ -1,17 +1,20 @@
 package stellar.snow.astralis.api.opengl.mapping;
 
 import org.lwjgl.opengl.*;
-import java.nio.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.PointerBuffer;
+import net.minecraft.client.Minecraft;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+
+import java.nio.*;
 import java.util.*;
 import java.util.regex.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Universal OpenGL Call Mapper
@@ -121,6 +124,9 @@ public class OpenGLCallMapper {
     private static boolean hasAtomicCounters = false;
     private static boolean hasShaderImageLoadStore = false;
     private static boolean hasBinaryShaders = false;
+    private static boolean hasRayTracing = false;
+    private static boolean hasRayQuery = false;
+    private static boolean hasMeshShading = false;
     
     // Extension flags (for fallback when core not available)
     private static boolean ARB_vertex_buffer_object = false;
@@ -157,6 +163,14 @@ public class OpenGLCallMapper {
     private static boolean ARB_shader_image_load_store = false;
     private static boolean ARB_gl_spirv = false;
     private static boolean ARB_get_program_binary = false;
+    
+    // Modern extensions (GL 4.5+)
+    private static boolean NV_ray_tracing = false;
+    private static boolean NV_mesh_shader = false;
+    private static boolean ARB_bindless_texture = false;
+    private static boolean ARB_sparse_texture = false;
+    private static boolean KHR_ray_tracing = false;
+    private static boolean KHR_ray_query = false;
     
     // Fallback state
     private static boolean fallbackToVanilla = false;
@@ -298,6 +312,14 @@ public class OpenGLCallMapper {
         ARB_shader_image_load_store = extensions.contains("GL_ARB_shader_image_load_store");
         ARB_gl_spirv = extensions.contains("GL_ARB_gl_spirv");
         ARB_get_program_binary = extensions.contains("GL_ARB_get_program_binary");
+        
+        // Modern extensions (GL 4.5+)
+        NV_ray_tracing = extensions.contains("GL_NV_ray_tracing");
+        NV_mesh_shader = extensions.contains("GL_NV_mesh_shader");
+        ARB_bindless_texture = extensions.contains("GL_ARB_bindless_texture");
+        ARB_sparse_texture = extensions.contains("GL_ARB_sparse_texture");
+        KHR_ray_tracing = extensions.contains("GL_KHR_ray_tracing");
+        KHR_ray_query = extensions.contains("GL_KHR_ray_query");
     }
     
     private static void determineFeatures() {
@@ -406,6 +428,13 @@ public class OpenGLCallMapper {
         
         // Binary shaders: GL 4.1 core or ARB extension
         hasBinaryShaders = GL41 || ARB_get_program_binary;
+        
+        // Ray tracing: NV or KHR extensions (no core OpenGL support yet)
+        hasRayTracing = NV_ray_tracing || KHR_ray_tracing;
+        hasRayQuery = KHR_ray_query;
+        
+        // Mesh shading: NV extension (no core OpenGL support yet)
+        hasMeshShading = NV_mesh_shader;
     }
     
     private static void determineEffectiveVersion() {
@@ -480,6 +509,11 @@ public class OpenGLCallMapper {
     public static boolean hasFeatureDSA() { return hasDSA; }
     public static boolean hasFeaturePersistentMapping() { return hasPersistentMapping; }
     public static boolean hasFeatureMultiDrawIndirect() { return hasMultiDrawIndirect; }
+    public static boolean hasFeatureRayTracing() { return hasRayTracing; }
+    public static boolean hasFeatureRayQuery() { return hasRayQuery; }
+    public static boolean hasFeatureMeshShading() { return hasMeshShading; }
+    public static boolean hasFeatureBindlessTextures() { return ARB_bindless_texture; }
+    public static boolean hasFeatureSparseTextures() { return ARB_sparse_texture; }
     
     // ========================================================================
     // STATE TRACKER

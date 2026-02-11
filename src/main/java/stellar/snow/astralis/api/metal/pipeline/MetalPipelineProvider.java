@@ -12,8 +12,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.Platform;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -39,7 +39,7 @@ import java.util.function.Supplier;
  * ╔══════════════════════════════════════════════════════════════════════════════════╗
  * ║                        METAL UNIFIED PIPELINE PROVIDER                           ║
  * ║                                                                                  ║
- * ║  Senior Architect Grade Implementation v2.0                                      ║
+ * ║                                        ║
  * ║  Java 25 | LWJGL 3.3.6 | Safety Critical | Performance First                     ║
  * ║  MacOS & iOS Optimized | Apple Silicon Native                                    ║
  * ║                                                                                  ║
@@ -86,7 +86,7 @@ import java.util.function.Supplier;
  */
 public final class MetalPipelineProvider implements AutoCloseable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetalPipelineProvider.class);
+    private static final Logger LOGGER = LogManager.getLogger(MetalPipelineProvider.class);
 
     // ════════════════════════════════════════════════════════════════════════════
     // CONSTANTS
@@ -355,6 +355,29 @@ public final class MetalPipelineProvider implements AutoCloseable {
         if (localInstance == null) {
             throw new IllegalStateException(
                 "MetalPipelineProvider not initialized. Call initialize() from the render thread first.");
+        }
+        return localInstance;
+    }
+    
+    /**
+     * Retrieves or initializes the singleton instance with the given MetalManager.
+     * This overload is provided for compatibility with initialization systems that
+     * manage the MetalManager separately.
+     *
+     * @param metalManager The MetalManager instance to use
+     * @return The provider instance
+     */
+    public static MetalPipelineProvider getInstance(MetalManager metalManager) {
+        MetalPipelineProvider localInstance = instance;
+        if (localInstance == null) {
+            synchronized (INSTANCE_LOCK) {
+                localInstance = instance;
+                if (localInstance == null) {
+                    LOGGER.info("Initializing MetalPipelineProvider singleton with provided MetalManager...");
+                    localInstance = new MetalPipelineProvider();
+                    instance = localInstance;
+                }
+            }
         }
         return localInstance;
     }

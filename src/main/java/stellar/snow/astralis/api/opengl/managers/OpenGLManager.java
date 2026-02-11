@@ -26,7 +26,8 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-/**
+
+import net.minecraft.client.Minecraft;/**
  * OpenGLManager
  *
  * The ultra-fast central dispatcher:

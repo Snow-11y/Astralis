@@ -3,6 +3,8 @@ package stellar.snow.astralis.api.opengl.pipeline;
 import stellar.snow.astralis.Astralis;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryStack;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;

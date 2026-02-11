@@ -22,15 +22,49 @@
 
 package stellar.snow.astralis.api.directx.managers;
 
+// ═══════════════════════════════════════════════════════════════════════════════════
+// Astralis Internal Imports
+// ═══════════════════════════════════════════════════════════════════════════════════
+import stellar.snow.astralis.config.Config;
+import stellar.snow.astralis.engine.gpu.authority.UniversalCapabilities;
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// LWJGL 3.4.0 - Core
+// ═══════════════════════════════════════════════════════════════════════════════════
+import org.lwjgl.system.*;
+import org.lwjgl.system.jni.*;
+import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryStack.*;
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// LWJGL 3.4.0 - bgfx Integration
+// ═══════════════════════════════════════════════════════════════════════════════════
+import org.lwjgl.bgfx.*;
+import static org.lwjgl.bgfx.BGFX.*;
+import static org.lwjgl.bgfx.BGFXPlatform.*;
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// Java 25 FFI (Foreign Function & Memory API)
+// ═══════════════════════════════════════════════════════════════════════════════════
+import java.lang.foreign.*;
+import java.lang.invoke.*;
+import static java.lang.foreign.ValueLayout.*;
+import static java.lang.foreign.MemoryLayout.*;
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// FastUtil Collections
+// ═══════════════════════════════════════════════════════════════════════════════════
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.longs.*;
 import it.unimi.dsi.fastutil.objects.*;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.lang.foreign.*;
-import java.lang.invoke.*;
+// ═══════════════════════════════════════════════════════════════════════════════════
+// Java Standard Library
+// ═══════════════════════════════════════════════════════════════════════════════════
+import org.jetbrains.annotations.Nullable;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
@@ -86,7 +120,109 @@ import java.util.function.*;
  * </ol>
  */
 public final class DirectXManager implements AutoCloseable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DirectXManager.class);
+    private static final Logger LOGGER = LogManager.getLogger(DirectXManager.class);
+    
+    // ════════════════════════════════════════════════════════════════════════
+    // SECTION 0: DIRECTX CONFIGURATION FROM CONFIG.JAVA
+    // ════════════════════════════════════════════════════════════════════════
+    
+    /**
+     * DirectX configuration pulled from central Config system.
+     * All settings respect user preferences and validate against capabilities.
+     */
+    public static final class DirectXConfig {
+        // Core settings
+        public final boolean enabled;
+        public final int preferredVersion;  // 9, 10, 11, 12
+        public final boolean allowFallback;
+        public final boolean preferDX12;
+        public final boolean preferDX11;
+        
+        // Feature levels
+        public final int minFeatureLevel;
+        public final int maxFeatureLevel;
+        
+        // DX12-specific
+        public final boolean useTiledResources;
+        public final boolean useResourceBarriers;
+        public final boolean useDescriptorHeaps;
+        public final boolean useBundledCommands;
+        public final boolean useRayTracing;
+        public final boolean useMeshShaders;
+        public final boolean useVariableRateShading;
+        public final boolean useSamplerFeedback;
+        public final int maxFrameLatency;
+        public final boolean enableWARP;
+        public final boolean enableDirectStorage;
+        public final boolean enableAutoStereo;
+        public final int descriptorHeapSize;
+        public final boolean useStablePowerState;
+        
+        // Performance
+        public final boolean preferBatching;
+        public final boolean preferAsyncCompute;
+        public final boolean preferAsyncCopy;
+        public final int commandListPoolSize;
+        public final int uploadHeapSizeMB;
+        
+        // Debug
+        public final boolean enableDebugLayer;
+        public final boolean enableGPUValidation;
+        public final boolean enableDRED;
+        
+        public DirectXConfig() {
+            // Pull from central Config system
+            this.enabled = Config.isDirectXEnabled();
+            this.preferredVersion = Config.getDirectXPreferredVersion();
+            this.allowFallback = Config.isDirectXAllowFallback();
+            this.preferDX12 = Config.isDirectXPreferDX12();
+            this.preferDX11 = Config.isDirectXPreferDX11();
+            
+            this.minFeatureLevel = Config.getDirectXMinFeatureLevel();
+            this.maxFeatureLevel = Config.getDirectXMaxFeatureLevel();
+            
+            // DX12 features
+            this.useTiledResources = Config.isDirectXUseTiledResources();
+            this.useResourceBarriers = Config.isDirectXUseResourceBarriers();
+            this.useDescriptorHeaps = Config.isDirectXUseDescriptorHeaps();
+            this.useBundledCommands = Config.isDirectXUseBundledCommands();
+            this.useRayTracing = Config.isDirectXUseRayTracing();
+            this.useMeshShaders = Config.isDirectXUseMeshShaders();
+            this.useVariableRateShading = Config.isDirectXUseVariableRateShading();
+            this.useSamplerFeedback = Config.isDirectXUseSamplerFeedback();
+            this.maxFrameLatency = Config.getDirectXMaxFrameLatency();
+            this.enableWARP = Config.isDirectXEnableWARP();
+            this.enableDirectStorage = Config.isDirectXEnableDirectStorage();
+            this.enableAutoStereo = Config.isDirectXEnableAutoStereo();
+            this.descriptorHeapSize = Config.getDirectXDescriptorHeapSize();
+            this.useStablePowerState = Config.isDirectXUseStablePowerState();
+            
+            // Performance settings
+            this.preferBatching = Config.isPreferBatching();
+            this.preferAsyncCompute = Config.isPreferAsyncCompute();
+            this.preferAsyncCopy = Config.isPreferAsyncTransfer();
+            this.commandListPoolSize = Config.getInt("directXCommandListPoolSize");
+            this.uploadHeapSizeMB = Config.getInt("directXUploadHeapSizeMB");
+            
+            // Debug settings
+            this.enableDebugLayer = Config.isEnableDebugOutput();
+            this.enableGPUValidation = Config.getBoolean("directXEnableGPUValidation");
+            this.enableDRED = Config.getBoolean("directXEnableDRED");
+        }
+        
+        /**
+         * Validate configuration against hardware capabilities
+         */
+        public void validate(Capabilities caps) {
+            if (!caps.supportedVersions.isEmpty()) {
+                APIVersion maxSupported = caps.supportedVersions.get(caps.supportedVersions.size() - 1);
+                if (preferredVersion > maxSupported.numericVersion) {
+                    LOGGER.warn("DirectX {} requested but only {} available, will fallback",
+                        preferredVersion, maxSupported.displayName);
+                }
+            }
+        }
+    }
     
     // ════════════════════════════════════════════════════════════════════════
     // SECTION 1: API VERSION & FEATURE LEVEL DEFINITIONS
@@ -228,7 +364,8 @@ public final class DirectXManager implements AutoCloseable {
         int samplerFeedbackTier,
         int maxRootSignatureDWORDs,
         int maxShaderVisibleDescriptors,
-        int maxSamplerDescriptors
+        int maxSamplerDescriptors,
+        List<APIVersion> supportedVersions
     ) {
         public static Builder builder() { return new Builder(); }
         
@@ -267,6 +404,17 @@ public final class DirectXManager implements AutoCloseable {
             private boolean supportsRayTracingTier1_0;
             private boolean supportsRayTracingTier1_1;
             private boolean supportsMeshShaders;
+            private boolean supportsTypedUAVLoads;
+            private boolean supportsROVs;
+            private boolean supportsConservativeRasterization;
+            private int conservativeRasterizationTier;
+            private boolean supportsTiledResources;
+            private int tiledResourcesTier;
+            private boolean supportsBindlessResources;
+            private int resourceBindingTier;
+            private boolean supportsRayTracingTier1_0;
+            private boolean supportsRayTracingTier1_1;
+            private boolean supportsMeshShaders;
             private boolean supportsVariableRateShading;
             private int variableRateShadingTier;
             private boolean supportsSamplerFeedback;
@@ -274,6 +422,7 @@ public final class DirectXManager implements AutoCloseable {
             private int maxRootSignatureDWORDs = 64;
             private int maxShaderVisibleDescriptors = 1_000_000;
             private int maxSamplerDescriptors = 2048;
+            private List<APIVersion> supportedVersions = new ArrayList<>();
             
             public Builder featureLevel(FeatureLevel fl) { this.featureLevel = fl; return this; }
             public Builder apiVersion(APIVersion v) { this.apiVersion = v; return this; }
@@ -317,6 +466,8 @@ public final class DirectXManager implements AutoCloseable {
             public Builder maxRootSignatureDWORDs(int max) { this.maxRootSignatureDWORDs = max; return this; }
             public Builder maxShaderVisibleDescriptors(int max) { this.maxShaderVisibleDescriptors = max; return this; }
             public Builder maxSamplerDescriptors(int max) { this.maxSamplerDescriptors = max; return this; }
+            public Builder supportedVersions(List<APIVersion> versions) { this.supportedVersions = new ArrayList<>(versions); return this; }
+            public Builder addSupportedVersion(APIVersion version) { this.supportedVersions.add(version); return this; }
             
             public Capabilities build() {
                 return new Capabilities(
@@ -330,7 +481,8 @@ public final class DirectXManager implements AutoCloseable {
                     supportsMeshShaders,
                     supportsVariableRateShading, variableRateShadingTier,
                     supportsSamplerFeedback, samplerFeedbackTier,
-                    maxRootSignatureDWORDs, maxShaderVisibleDescriptors, maxSamplerDescriptors
+                    maxRootSignatureDWORDs, maxShaderVisibleDescriptors, maxSamplerDescriptors,
+                    Collections.unmodifiableList(supportedVersions)
                 );
             }
         }

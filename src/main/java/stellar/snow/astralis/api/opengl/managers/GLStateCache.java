@@ -1,7 +1,9 @@
 package stellar.snow.astralis.api.opengl.managers;
 
 import stellar.snow.astralis.api.opengl.mapping.OpenGLCallMapper;
-import stellar.snow.astralis.api.common.GLBufferOpsBase;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import net.minecraft.world.World;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

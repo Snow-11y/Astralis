@@ -23,7 +23,8 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Consumer;
 
-/**
+
+import org.apache.logging.log4j.Logger;/**
  * ╔══════════════════════════════════════════════════════════════════════════════════╗
  * ║                      DIRECTX UNIFIED PIPELINE PROVIDER                           ║
  * ║                                                                                  ║

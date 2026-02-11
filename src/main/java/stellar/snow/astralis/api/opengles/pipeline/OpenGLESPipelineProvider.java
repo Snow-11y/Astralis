@@ -35,7 +35,8 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Consumer;
 
-/**
+
+import org.apache.logging.log4j.Logger;/**
  * ╔══════════════════════════════════════════════════════════════════════════════════╗
  * ║                     OPENGL ES UNIFIED PIPELINE PROVIDER                          ║
  * ║                                                                                  ║

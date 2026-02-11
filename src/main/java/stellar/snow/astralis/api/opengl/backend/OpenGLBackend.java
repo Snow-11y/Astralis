@@ -1,7 +1,10 @@
 package stellar.snow.astralis.api.opengl.backend;
 
 import stellar.snow.astralis.Astralis;
+import stellar.snow.astralis.engine.gpu.authority.GPUBackend;
 import stellar.snow.astralis.api.opengl.mapping.OpenGLCallMapper;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.lang.foreign.*;
 import java.nio.ByteBuffer;
@@ -71,6 +74,7 @@ public final class OpenGLBackend implements GPUBackend, AutoCloseable {
 
     private static volatile OpenGLBackend INSTANCE;
     private static final Object INSTANCE_LOCK = new Object();
+    private static final Logger LOGGER = LogManager.getLogger("Astralis-OpenGL");
 
     public static OpenGLBackend get() {
         OpenGLBackend instance = INSTANCE;

@@ -4,7 +4,8 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-/**
+
+import net.minecraft.client.Minecraft;/**
  * GLBufferOps10 - OpenGL 1.0 Pipeline
  * 
  * OpenGL 1.0 predates VBOs by many years.

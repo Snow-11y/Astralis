@@ -44,7 +44,8 @@ import java.util.concurrent.locks.StampedLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/**
+
+import org.apache.logging.log4j.Logger;/**
  * ╔══════════════════════════════════════════════════════════════════════════════════╗
  * ║                          HLSL SHADER PIPELINE PROVIDER                           ║
  * ║                                                                                  ║

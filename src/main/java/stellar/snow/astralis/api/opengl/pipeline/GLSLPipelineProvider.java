@@ -3,6 +3,8 @@ package stellar.snow.astralis.api.opengl.pipeline;
 import stellar.snow.astralis.Astralis;
 import stellar.snow.astralis.api.opengl.mapping.GLSLCallMapper;
 import org.lwjgl.opengl.*;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.*;
 import java.nio.file.Files;

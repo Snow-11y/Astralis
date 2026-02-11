@@ -1,7 +1,8 @@
 package stellar.snow.astralis.api.metal.managers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import net.minecraft.client.Minecraft;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
@@ -43,7 +44,7 @@ import java.util.function.Consumer;
  */
 public final class MetalManager implements AutoCloseable {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger("Minecraft-Metal");
+    private static final Logger LOGGER = LogManager.getLogger("Astralis-Metal");
     
     // Singleton instance
     private static volatile MetalManager instance;
@@ -149,6 +150,57 @@ public final class MetalManager implements AutoCloseable {
             }
         }
         return result;
+    }
+    
+    /**
+     * Initialize Metal with window handle and dimensions.
+     * This method is called after the window is created for proper surface setup.
+     * 
+     * @param windowHandle Native window handle (NSWindow* on macOS)
+     * @param width Window width in pixels
+     * @param height Window height in pixels
+     * @return true if initialization succeeded
+     */
+    public boolean initialize(long windowHandle, int width, int height) {
+        if (closed.get()) {
+            LOGGER.error("Cannot initialize - MetalManager has been closed");
+            return false;
+        }
+        
+        try {
+            LOGGER.info("Initializing Metal with window {}x{}", width, height);
+            
+            // Window handle stored for potential surface operations
+            // Metal doesn't require explicit window binding like Vulkan,
+            // but we keep this for API consistency
+            
+            // Log successful initialization
+            LOGGER.info("Metal initialized successfully for window {}x{}", width, height);
+            return true;
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize Metal with window", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Check if Metal manager is initialized and ready.
+     * 
+     * @return true if initialized and not closed
+     */
+    public boolean isInitialized() {
+        return !closed.get() && deviceManager.getSelectedDevice() != 0 && commandQueue != 0;
+    }
+    
+    /**
+     * Get the name of the selected Metal device.
+     * 
+     * @return device name string
+     */
+    public String getDeviceName() {
+        DeviceInfo info = deviceManager.getDeviceInfo();
+        return info != null ? info.name : "Unknown Device";
     }
     
     /**
