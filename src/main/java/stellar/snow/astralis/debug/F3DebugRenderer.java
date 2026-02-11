@@ -1,6 +1,6 @@
 package stellar.snow.astralis.debug;
 
-import stellar.snow.astralis.api.common.GLBuAerOpsBase;
+import stellar.snow.astralis.api.common.GLBuffAerOpsBase;
 
 /**
  * F3DebugRenderer - Helper for Snowium Render debug display in MC F3 screen.
