@@ -1,9 +1,9 @@
 package stellar.snow.astralis.bridge;
 
-import stellar.snow.astralis.ecs.Archetype;
-import stellar.snow.astralis.ecs.SnowySystem;
-import stellar.snow.astralis.ecs.SystemScheduler;
-import stellar.snow.astralis.ecs.World;
+import stellar.snow.astralis.engine.ecs.core.Archetype;
+import stellar.snow.astralis.engine.ecs.core.SnowySystem;
+import stellar.snow.astralis.engine.ecs.core.SystemScheduler;
+import stellar.snow.astralis.engine.ecs.core.World;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
@@ -26,7 +26,7 @@ public final class SyncSystems {
     /**
      * Syncs state from Minecraft entities to ECS components (PRE_UPDATE).
      */
-    public static final class InboundSyncSystem extends System {
+    public static final class InboundSyncSystem extends SnowySystem {
 
         private final MinecraftECSBridge bridge;
         private final AtomicLong syncCount = new AtomicLong(0);
@@ -60,7 +60,7 @@ public final class SyncSystems {
     /**
      * Syncs state from ECS components back to Minecraft entities (POST_UPDATE).
      */
-    public static final class OutboundSyncSystem extends System {
+    public static final class OutboundSyncSystem extends SnowySystem {
 
         private final MinecraftECSBridge bridge;
         private final AtomicLong writeCount = new AtomicLong(0);

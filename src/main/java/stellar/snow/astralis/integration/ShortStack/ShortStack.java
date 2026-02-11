@@ -26,11 +26,6 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -49,35 +44,28 @@ import java.util.stream.Stream;
 // ============================================================================
 
 public final class ShortStackMod {
-    public static final String MODID = "ShortStack";
-    public static final String NAME = "ShortStack";
-    public static final String VERSION = "2.0.0-java25";
-    
-    private static final Logger LOGGER = LogManager.getLogger(NAME);
+    private static final Logger LOGGER = LogManager.getLogger("ShortStack");
     private static ShortStackConfig config;
     private static RecipeOptimizationEngine engine;
     
-    @EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public static void preInit() {
         LOGGER.info("""
             ╔════════════════════════════════════════╗
-            ║    ShortStack v%s Loading...      ║
+            ║    ShortStack v2.0.0 Loading...        ║
             ║  Parallel Recipe Matching Engine      ║
             ║     Powered by Java 25 Features       ║
             ╚════════════════════════════════════════╝
-            """.formatted(VERSION));
+            """);
         
-        config = ShortStackConfig.load(event.getSuggestedConfigurationFile());
+        config = ShortStackConfig.load(null);
     }
     
-    @EventHandler
-    public void init(FMLInitializationEvent event) {
+    public static void init() {
         LOGGER.info("Initializing ShortStack recipe optimization engine...");
         engine = new RecipeOptimizationEngine(config);
     }
     
-    @EventHandler
-    public void postInit(FMLPostInitializationEvent event) {
+    public static void postInit() {
         engine.analyzeRecipes();
         
         var stats = engine.getStatistics();

@@ -57,7 +57,12 @@ public final class World implements AutoCloseable {
         boolean useVirtualThreads,
         boolean enableChangeDetection,
         boolean enableEventSystem,
-        boolean useOffHeapStorage
+        boolean useOffHeapStorage,
+        int initialCapacity,
+        int chunkSize,
+        boolean trackChanges,
+        boolean enableGpu,
+        boolean buildEdgeGraph
     ) {
         public static Config defaults(String name) {
             return new Config(
@@ -68,8 +73,50 @@ public final class World implements AutoCloseable {
                 true,   // Virtual threads enabled by default
                 true,   // Change detection enabled
                 true,   // Event system enabled
-                true    // Off-heap storage enabled
+                true,   // Off-heap storage enabled
+                1024,   // Initial capacity
+                256,    // Chunk size
+                true,   // Track changes
+                false,  // GPU disabled by default (set via capabilities)
+                true    // Build edge graph
             );
+        }
+        
+        // Convenience methods for fluent configuration
+        public Config withInitialCapacity(int capacity) {
+            return new Config(name, maxEntities, parallelism, commandBufferSize, 
+                useVirtualThreads, enableChangeDetection, enableEventSystem, 
+                useOffHeapStorage, capacity, chunkSize, trackChanges, enableGpu, buildEdgeGraph);
+        }
+        
+        public Config withChunkSize(int size) {
+            return new Config(name, maxEntities, parallelism, commandBufferSize, 
+                useVirtualThreads, enableChangeDetection, enableEventSystem, 
+                useOffHeapStorage, initialCapacity, size, trackChanges, enableGpu, buildEdgeGraph);
+        }
+        
+        public Config withUseOffHeap(boolean offHeap) {
+            return new Config(name, maxEntities, parallelism, commandBufferSize, 
+                useVirtualThreads, enableChangeDetection, enableEventSystem, 
+                offHeap, initialCapacity, chunkSize, trackChanges, enableGpu, buildEdgeGraph);
+        }
+        
+        public Config withTrackChanges(boolean track) {
+            return new Config(name, maxEntities, parallelism, commandBufferSize, 
+                useVirtualThreads, enableChangeDetection, enableEventSystem, 
+                useOffHeapStorage, initialCapacity, chunkSize, track, enableGpu, buildEdgeGraph);
+        }
+        
+        public Config withEnableGpu(boolean gpu) {
+            return new Config(name, maxEntities, parallelism, commandBufferSize, 
+                useVirtualThreads, enableChangeDetection, enableEventSystem, 
+                useOffHeapStorage, initialCapacity, chunkSize, trackChanges, gpu, buildEdgeGraph);
+        }
+        
+        public Config withBuildEdgeGraph(boolean build) {
+            return new Config(name, maxEntities, parallelism, commandBufferSize, 
+                useVirtualThreads, enableChangeDetection, enableEventSystem, 
+                useOffHeapStorage, initialCapacity, chunkSize, trackChanges, enableGpu, build);
         }
 
         public static Builder builder(String name) {
@@ -85,6 +132,11 @@ public final class World implements AutoCloseable {
             private boolean enableChangeDetection = true;
             private boolean enableEventSystem = true;
             private boolean useOffHeapStorage = true;
+            private int initialCapacity = 1024;
+            private int chunkSize = 256;
+            private boolean trackChanges = true;
+            private boolean enableGpu = false;
+            private boolean buildEdgeGraph = true;
 
             private Builder(String name) { this.name = name; }
 
@@ -95,10 +147,16 @@ public final class World implements AutoCloseable {
             public Builder enableChangeDetection(boolean val) { enableChangeDetection = val; return this; }
             public Builder enableEventSystem(boolean val) { enableEventSystem = val; return this; }
             public Builder useOffHeapStorage(boolean val) { useOffHeapStorage = val; return this; }
+            public Builder initialCapacity(int val) { initialCapacity = val; return this; }
+            public Builder chunkSize(int val) { chunkSize = val; return this; }
+            public Builder trackChanges(boolean val) { trackChanges = val; return this; }
+            public Builder enableGpu(boolean val) { enableGpu = val; return this; }
+            public Builder buildEdgeGraph(boolean val) { buildEdgeGraph = val; return this; }
 
             public Config build() {
                 return new Config(name, maxEntities, parallelism, commandBufferSize,
-                    useVirtualThreads, enableChangeDetection, enableEventSystem, useOffHeapStorage);
+                    useVirtualThreads, enableChangeDetection, enableEventSystem, useOffHeapStorage,
+                    initialCapacity, chunkSize, trackChanges, enableGpu, buildEdgeGraph);
             }
         }
     }

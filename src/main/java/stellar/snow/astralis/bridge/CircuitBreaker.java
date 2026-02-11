@@ -1,4 +1,4 @@
-package stellar.snow.astralis.nexus.controlpanel;
+package stellar.snow.astralis.bridge;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;

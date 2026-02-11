@@ -1,4 +1,4 @@
-package stellar.snow.astralis.nexus.controlpanel;
+package stellar.snow.astralis.bridge;
 
 import stellar.snow.astralis.engine.ecs.core.Archetype;
 import stellar.snow.astralis.engine.ecs.core.SnowySystem;
@@ -10,7 +10,7 @@ import java.lang.foreign.ValueLayout;
 /**
  * InterpolationSystem - Handles smooth transform interpolation for rendering.
  */
-public final class InterpolationSystem extends System {
+public final class InterpolationSystem extends SnowySystem {
 
     private final MinecraftECSBridge bridge;
     private volatile float currentInterpolationFactor = 0.0f;

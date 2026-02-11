@@ -97,6 +97,7 @@ public final class Config {
         GLSL("GLSL - OpenGL Shading Language"),
         GLSL_ES("GLSL ES - OpenGL ES Shading Language - Mobile/Embedded"),
         HLSL("HLSL - High Level Shading Language (DirectX)"),
+        MSL("Metal Shading language - Apple's baby"),
         SPIRV("SPIR-V - Standard Portable Intermediate Representation");
 
         public final String description;
@@ -265,7 +266,46 @@ public final class Config {
         defaults.put("vulkanUseMemoryBudget", true); // Track memory budget
         defaults.put("vulkanMaxDeviceMemoryMB", 0); // Max device memory (0 = unlimited)
 
-        // DirectX Version Limits (9-12.2 supported)
+        // Vulkan Extended Feature Flags (aligned with VulkanCallMapper capabilities)
+        defaults.put("vulkanEnableExternalMemory", false);       // Import/export GPU memory cross-process (Win32/POSIX fd)
+        defaults.put("vulkanEnableExternalMemoryWin32", false);  // Win32 HANDLE memory import/export
+        defaults.put("vulkanEnableExternalMemoryFd", false);     // POSIX fd memory import/export
+
+        // Variable Rate Shading
+        defaults.put("vulkanEnableVRS", false);                  // Fragment shading rate (KHR)
+        defaults.put("vulkanEnableShadingRateImage", false);     // Per-tile VRS image (NV ext, foveated rendering)
+        defaults.put("vulkanShadingRateTileSize", 16);           // VRS tile size (8, 16, or 32)
+
+        // Mesh / Task Shaders (EXT_mesh_shader)
+        defaults.put("vulkanEnableMeshShaderEXT", false);        // EXT_mesh_shader (cross-vendor, VK 1.3+)
+        defaults.put("vulkanEnableTaskShaders", false);          // Task shader stage with mesh pipeline
+
+        // Ray Tracing Extended
+        defaults.put("vulkanEnableRayTracing", false);           // KHR ray tracing pipeline
+        defaults.put("vulkanEnableRayQuery", false);             // Inline ray query (any stage)
+        defaults.put("vulkanEnableAccelerationStructure", false); // BVH acceleration structure
+        defaults.put("vulkanEnableRayTracingPositionFetch", false); // VK_KHR_ray_tracing_position_fetch
+        defaults.put("vulkanScratchBufferSizeMB", 32);           // BLAS/TLAS scratch buffer size
+
+        // Async Streaming / Transfer Queue
+        defaults.put("vulkanEnableAsyncTransfer", true);         // Dedicated transfer queue for async uploads
+        defaults.put("vulkanEnableAsyncCompute", true);          // Separate compute queue
+        defaults.put("vulkanAsyncStagingRingBufferMB", 64);      // Staging ring buffer for async streaming
+
+        // KTX2 Texture Pipeline
+        defaults.put("vulkanEnableKTX2Pipeline", true);          // Runtime KTX2 conversion and upload
+        defaults.put("vulkanKTX2CacheDirectory", "cache/ktx2"); // KTX2 texture cache directory
+        defaults.put("vulkanKTX2MaxCacheSizeMB", 512);          // Max KTX2 cache size
+
+        // Push Descriptors (zero-alloc binding, VK 1.4 / KHR ext)
+        defaults.put("vulkanEnablePushDescriptors", true);       // Push descriptor sets (no heap alloc)
+
+        // Pipeline Library / Fast Compile
+        defaults.put("vulkanEnablePipelineLibrary", false);      // VK_KHR_pipeline_library
+        defaults.put("vulkanEnableGraphicsPipelineLibrary", false); // VK_EXT_graphics_pipeline_library
+
+        // Compute-Shader Mipmap Generation
+        defaults.put("vulkanEnableComputeMipmaps", true);        // Use compute shader for mipmap generation
         defaults.put("minDirectXMajor", 9);
         defaults.put("minDirectXMinor", 0);
         defaults.put("maxDirectXMajor", 12);
@@ -344,7 +384,7 @@ public final class Config {
         // HLSL Core Settings
         defaults.put("hlslEnabled", true); // Enable HLSL shader compilation
         defaults.put("hlslShaderModel", "6_0"); // Target shader model: 2_0, 3_0, 4_0, 4_1, 5_0, 5_1, 6_0-6_8
-        defaults.put("hlslMinShaderModel", "5_0"); // Minimum shader model (fallback)
+        defaults.put("hlslMinShaderModel", "5_0"); //  mum shader model (fallback)
         defaults.put("hlslMaxShaderModel", "6_8"); // Maximum shader model
         defaults.put("hlslPreferDXC", true); // Use DXC compiler (modern) vs D3DCompiler (legacy)
         defaults.put("hlslFallbackToD3DCompiler", true); // Fallback to D3DCompiler if DXC fails
@@ -749,6 +789,465 @@ public final class Config {
         // Debug
         defaults.put("enableDebugOutput", false);
         defaults.put("validateOnEveryCall", false);
+        
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // ECS (Entity Component System) Settings - Kirino-Competitive Edition
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        
+        // ECS Core Settings
+        defaults.put("ecsEnabled", true); // Enable ECS system
+        defaults.put("ecsThreadCount", Runtime.getRuntime().availableProcessors()); // Number of threads for parallel processing
+        defaults.put("ecsUseVirtualThreads", true); // Use virtual threads (Java 21+)
+        defaults.put("ecsChunkSize", 256); // Entities per chunk for batch processing
+        defaults.put("ecsInitialCapacity", 1024); // Initial entity capacity
+        defaults.put("ecsUseOffHeap", true); // Use off-heap memory (Foreign Memory API)
+        defaults.put("ecsTrackChanges", true); // Track component changes
+        defaults.put("ecsEnableGpu", false); // Enable GPU integration (computed from capabilities)
+        defaults.put("ecsBuildEdgeGraph", true); // Build archetype edge graph
+        defaults.put("ecsParallelThreshold", 1000); // Minimum entities for parallel processing
+        
+        // Struct Flattening (Kirino Advantage #1)
+        defaults.put("ecsEnableStructFlattening", true); // Enable POJO → Array decomposition
+        defaults.put("ecsStructFlatteningSizeHint", 256); // Default size hint for component arrays
+        defaults.put("ecsStructFlatteningUseMethodHandles", true); // Use MethodHandles for zero-cost abstraction
+        defaults.put("ecsStructFlatteningUseLambdaMetafactory", true); // Use LambdaMetafactory for optimal performance
+        defaults.put("ecsStructFlatteningCacheAccessors", true); // Cache generated accessors
+        
+        // Component Discovery (Kirino Advantage #3)
+        defaults.put("ecsAutoScanComponents", true); // Automatically scan for @Component classes
+        defaults.put("ecsComponentScanPackages", new String[] { 
+            "stellar.snow.astralis.engine.ecs.components",
+            "stellar.snow.astralis.engine.ecs.Minecraft"
+        }); // Packages to scan
+        defaults.put("ecsComponentScanAtStartup", true); // Scan at startup vs on-demand
+        defaults.put("ecsComponentScanParallel", true); // Parallel component scanning
+        defaults.put("ecsComponentCacheResults", true); // Cache scan results
+        
+        // Dynamic Archetypes (Kirino Advantage #4)
+        defaults.put("ecsEnableDynamicArchetypes", true); // Enable automatic archetype migration
+        defaults.put("ecsArchetypePoolSize", 64); // Initial archetype pool size
+        defaults.put("ecsArchetypeGrowthFactor", 1.5); // Growth factor when pool fills
+        defaults.put("ecsArchetypeMigrationBatchSize", 128); // Entities per migration batch
+        defaults.put("ecsArchetypeEdgeOptimization", true); // Cache archetype migration paths
+        defaults.put("ecsArchetypeCompactionEnabled", true); // Compact fragmented archetypes
+        defaults.put("ecsArchetypeCompactionThreshold", 0.3); // Compact when 30% empty
+        
+        // System Scheduling (Kirino Advantage #2)
+        defaults.put("ecsUseTarjanScheduling", true); // Use Tarjan's algorithm for scheduling
+        defaults.put("ecsDetectCycles", true); // Detect circular dependencies
+        defaults.put("ecsThrowOnCycles", true); // Throw exception on cycles vs warn
+        defaults.put("ecsUseDagOptimization", true); // Use DAG for parallel execution
+        defaults.put("ecsMaxSystemDependencyDepth", 32); // Max dependency chain depth
+        defaults.put("ecsSystemSchedulingStrategy", "DAG"); // "LINEAR", "DAG", or "WORK_STEALING"
+        defaults.put("ecsEnableWorkStealing", true); // Enable work-stealing thread pool
+        defaults.put("ecsWorkStealingQueueSize", 256); // Per-thread work queue size
+        
+        // Type-Safe Injection (Kirino Advantage #5)
+        defaults.put("ecsEnableDataInjection", true); // Enable automatic data injection
+        defaults.put("ecsInjectAtRegistration", true); // Inject at system registration vs lazy
+        defaults.put("ecsValidateInjectionTypes", true); // Validate injection type safety
+        defaults.put("ecsInjectReadOnlyArrays", true); // Inject read-only views for safety
+        defaults.put("ecsCacheInjectionHandles", true); // Cache method handles
+        
+        // Performance & Profiling
+        defaults.put("ecsEnableProfiler", false); // Enable ECS profiler
+        defaults.put("ecsEnableJFR", false); // Enable JFR (Java Flight Recorder) events
+        defaults.put("ecsProfilerSamplingInterval", 100); // Profiler sampling interval (ms)
+        defaults.put("ecsProfilerRecordHistory", 1000); // Number of samples to keep
+        defaults.put("ecsEnableMemoryStats", true); // Track memory usage statistics
+        defaults.put("ecsEnableWorkloadEstimation", true); // Enable workload estimator
+        defaults.put("ecsWorkloadEstimatorEMA", 0.3); // Exponential moving average alpha
+        
+        // Compatibility & Safety
+        defaults.put("ecsCompatibilityMode", false); // Disable advanced features for compatibility
+        defaults.put("ecsVanillaFallback", true); // Fallback to vanilla entity processing
+        defaults.put("ecsSafeMode", false); // Extra validation (slower)
+        defaults.put("ecsEnableAssertions", false); // Enable runtime assertions
+        defaults.put("ecsMaxEntityCount", 1048576); // Maximum entities (1M)
+        defaults.put("ecsMaxComponentTypes", 256); // Maximum component types
+        defaults.put("ecsMaxSystemCount", 128); // Maximum systems
+        
+        // Multi-Mod Ecosystem (Kirino Advantage #6)
+        defaults.put("ecsEnableModIsolation", true); // Isolate ECS instances per mod
+        defaults.put("ecsForgeEventIntegration", true); // Integrate with Forge event bus
+        defaults.put("ecsAllowModComponentRegistration", true); // Allow mods to register components
+        defaults.put("ecsAllowModSystemRegistration", true); // Allow mods to register systems
+        defaults.put("ecsModRegistrationTimeout", 10000); // Mod registration timeout (ms)
+        
+        // Debug & Development
+        defaults.put("ecsDebugMode", false); // Enable debug logging
+        defaults.put("ecsDebugPrintArchetypes", false); // Print archetype structure
+        defaults.put("ecsDebugPrintDependencyGraph", false); // Print dependency graph
+        defaults.put("ecsDebugValidateEveryFrame", false); // Validate ECS state every frame
+        defaults.put("ecsDebugTrackAllocations", false); // Track allocations (very slow)
+        defaults.put("ecsDebugDumpStatsInterval", 0); // Dump stats interval (0 = disabled)
+        
+        // Minecraft-Specific ECS Integration
+        defaults.put("ecsMinecraftEntityOptimizer", true); // Optimize Minecraft entities
+        defaults.put("ecsMinecraftChunkStreamer", true); // Chunk streaming optimization
+        defaults.put("ecsMinecraftRedstoneOptimizer", false); // Redstone optimization (experimental)
+        defaults.put("ecsMinecraftSpatialOptimizer", true); // Spatial partitioning
+        defaults.put("ecsMinecraftBridgeEnabled", true); // Enable ECS bridge
+        defaults.put("ecsMinecraftBatchEntityTick", true); // Batch entity ticking
+        defaults.put("ecsMinecraftParallelEntityTick", true); // Parallel entity ticking
+        defaults.put("ecsMinecraftEntityTickBatchSize", 64); // Entities per tick batch
+        
+        // Bridge Systems (Circuit Breaker, Interpolation, Sync)
+        defaults.put("bridgeCircuitBreakerEnabled", true); // Enable circuit breaker
+        defaults.put("bridgeCircuitBreakerFailureThreshold", 5); // Failures before tripping
+        defaults.put("bridgeCircuitBreakerResetTimeout", 5000L); // Reset timeout in ms
+        defaults.put("bridgeInterpolationEnabled", true); // Enable interpolation
+        defaults.put("bridgeInterpolationMode", "LINEAR"); // LINEAR, CUBIC, HERMITE
+        defaults.put("bridgeSyncSystemsEnabled", true); // Enable sync systems
+        defaults.put("bridgeSyncBatchSize", 128); // Batch size for sync operations
+        
+        // Culling Manager Settings
+        defaults.put("cullingManagerEnabled", true); // Enable culling manager
+        defaults.put("cullingTier", "HIGH"); // LOW, MEDIUM, HIGH, ULTRA
+        defaults.put("cullingEnableFrustum", true); // Frustum culling
+        defaults.put("cullingEnableOcclusion", true); // Occlusion culling
+        defaults.put("cullingEnableDistance", true); // Distance culling
+        defaults.put("cullingMaxDistance", 256.0); // Max render distance
+        defaults.put("cullingOcclusionQueryBatchSize", 64); // Queries per batch
+        defaults.put("cullingUseHiZ", true); // Use hierarchical Z-buffer
+        
+        // Indirect Draw Manager Settings
+        defaults.put("indirectDrawEnabled", true); // Enable indirect drawing
+        defaults.put("indirectDrawMaxDrawCalls", 10000); // Max draw calls per frame
+        defaults.put("indirectDrawBatchingStrategy", "MATERIAL"); // MATERIAL, MESH, DISTANCE
+        defaults.put("indirectDrawEnableMultiDraw", true); // Use multi-draw indirect
+        defaults.put("indirectDrawCommandBufferSizeMB", 4); // Command buffer size
+        
+        // Draw Pool Settings
+        defaults.put("drawPoolEnabled", true); // Enable draw pool
+        defaults.put("drawPoolMaxDrawCalls", 10000); // Max pooled draw calls
+        defaults.put("drawPoolMaxClusters", 256); // Max draw clusters
+        defaults.put("drawPoolClusteringStrategy", "SPATIAL"); // SPATIAL, MATERIAL, HYBRID
+        
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // RENDER ENGINE SETTINGS
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        
+        // Render Graph Settings
+        defaults.put("renderGraphEnabled", true);
+        defaults.put("renderGraphMaxFramesInFlight", 3);
+        defaults.put("renderGraphCommandBufferPoolSize", 16);
+        defaults.put("renderGraphEnablePassCulling", true);
+        defaults.put("renderGraphEnablePassMerging", true);
+        defaults.put("renderGraphEnableMemoryAliasing", true);
+        defaults.put("renderGraphEnableParallelRecording", true);
+        defaults.put("renderGraphEnableSplitBarriers", true);
+        defaults.put("renderGraphEnableGPUProfiling", false);
+        defaults.put("renderGraphParallelRecordingThreshold", 4);
+        defaults.put("renderGraphAutoCompile", true);
+        defaults.put("renderGraphValidateEveryFrame", false);
+        
+        // Render System Settings
+        defaults.put("renderSystemEnabled", true);
+        defaults.put("renderSystemUseECS", true);
+        defaults.put("renderSystemBatchSize", 256);
+        defaults.put("renderSystemEnableInstancing", true);
+        defaults.put("renderSystemEnableIndirectDraw", true);
+        defaults.put("renderSystemEnableGPUCulling", false);
+        defaults.put("renderSystemEnableOcclusionCulling", true);
+        defaults.put("renderSystemEnableFrustumCulling", true);
+        defaults.put("renderSystemCullingBatchSize", 1024);
+        defaults.put("renderSystemMaxDrawCalls", 10000);
+        defaults.put("renderSystemEnableSortByMaterial", true);
+        defaults.put("renderSystemEnableSortByDepth", true);
+        defaults.put("renderSystemEnableStateCache", true);
+        defaults.put("renderSystemStateCacheSize", 512);
+        
+        // Render Pipeline Settings
+        defaults.put("renderPipelineEnableVBO", true);
+        defaults.put("renderPipelineEnableVAO", true);
+        defaults.put("renderPipelineEnableUBO", true);
+        defaults.put("renderPipelineEnableSSBO", false);
+        defaults.put("renderPipelineEnableDSA", false);
+        defaults.put("renderPipelineEnablePersistentMapping", false);
+        defaults.put("renderPipelineBufferSizeMB", 256);
+        defaults.put("renderPipelineUniformBufferSize", 65536);
+        defaults.put("renderPipelineVertexBufferSize", 16777216); // 16MB
+        defaults.put("renderPipelineIndexBufferSize", 4194304); // 4MB
+        
+        // Render State Settings
+        defaults.put("renderStateEnableDepthTest", true);
+        defaults.put("renderStateEnableBlending", true);
+        defaults.put("renderStateEnableCulling", true);
+        defaults.put("renderStateDepthFunc", "LESS");
+        defaults.put("renderStateBlendSrc", "SRC_ALPHA");
+        defaults.put("renderStateBlendDst", "ONE_MINUS_SRC_ALPHA");
+        defaults.put("renderStateCullFace", "BACK");
+        defaults.put("renderStateFrontFace", "CCW");
+        defaults.put("renderStateEnableDepthWrite", true);
+        defaults.put("renderStateEnableColorWrite", true);
+        defaults.put("renderStateEnableStencilTest", false);
+        
+        // Resolution Manager Settings
+        defaults.put("resolutionManagerEnabled", true);
+        defaults.put("resolutionManagerMode", "ADAPTIVE"); // STATIC, ADAPTIVE, PERFORMANCE
+        defaults.put("resolutionManagerDynamicScaling", true);
+        defaults.put("resolutionManagerMinScale", 0.5);
+        defaults.put("resolutionManagerMaxScale", 1.0);
+        defaults.put("resolutionManagerTargetFrameTime", 16.66); // 60 FPS
+        defaults.put("resolutionManagerScaleStep", 0.05);
+        defaults.put("resolutionManagerAdaptiveInterval", 10); // Frames
+        defaults.put("resolutionManagerEnableTAA", false);
+        defaults.put("resolutionManagerEnableFSR", false);
+        defaults.put("resolutionManagerEnableDLSS", false);
+        
+        // Render Bridge Settings
+        defaults.put("renderBridgeEnabled", true);
+        defaults.put("renderBridgeMinecraftCompatibility", true);
+        defaults.put("renderBridgeEnableChunkRendering", true);
+        defaults.put("renderBridgeEnableEntityRendering", true);
+        defaults.put("renderBridgeEnableTileEntityRendering", true);
+        defaults.put("renderBridgeEnableParticleRendering", true);
+        defaults.put("renderBridgeChunkBatchSize", 64);
+        defaults.put("renderBridgeEntityBatchSize", 256);
+        
+        // Advanced Rendering Features
+        defaults.put("renderEnableHDR", false);
+        defaults.put("renderEnableBloom", false);
+        defaults.put("renderEnableSSAO", false);
+        defaults.put("renderEnableSSR", false);
+        defaults.put("renderEnableShadows", true);
+        defaults.put("renderShadowMapSize", 2048);
+        defaults.put("renderShadowCascades", 3);
+        defaults.put("renderEnableCSM", true); // Cascaded Shadow Maps
+        defaults.put("renderEnablePBR", false); // Physically Based Rendering
+        defaults.put("renderEnableIBL", false); // Image Based Lighting
+        
+        // Performance & Profiling
+        defaults.put("renderEnableProfiler", false);
+        defaults.put("renderEnableGPUTimestamps", false);
+        defaults.put("renderEnableDrawCallCounter", true);
+        defaults.put("renderEnableStateChangeCounter", true);
+        defaults.put("renderPrintStatsInterval", 0); // 0 = disabled
+        defaults.put("renderMaxFrameTime", 33.33); // 30 FPS fallback
+        
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // GPU BACKEND INTEGRATION SETTINGS
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        
+        // Backend Selection
+        defaults.put("gpuBackendPreferred", "AUTO"); // AUTO, VULKAN, METAL, DIRECTX, OPENGL, OPENGLES, NULL
+        defaults.put("gpuBackendAllowFallback", true);
+        defaults.put("gpuBackendFallbackChain", new String[] {
+            "VULKAN", "DIRECTX", "METAL", "OPENGL", "OPENGLES", "NULL"
+        });
+        defaults.put("gpuBackendRequireMinimumVersion", false);
+        defaults.put("gpuBackendValidateCapabilities", true);
+        
+        // Platform-Specific Preferences
+        defaults.put("gpuBackendWindowsPreferDX", true);
+        defaults.put("gpuBackendMacOSPreferMetal", true);
+        defaults.put("gpuBackendLinuxPreferVulkan", true);
+        defaults.put("gpuBackendAndroidPreferVulkan", false); // Prefer GLES on Android
+        
+        // Feature Requirements
+        defaults.put("gpuBackendRequireComputeShaders", false);
+        defaults.put("gpuBackendRequireGeometryShaders", false);
+        defaults.put("gpuBackendRequireTessellation", false);
+        defaults.put("gpuBackendRequireMeshShaders", false);
+        defaults.put("gpuBackendRequireRayTracing", false);
+        defaults.put("gpuBackendRequireBindlessTextures", false);
+        defaults.put("gpuBackendRequireMultiDrawIndirect", false);
+        
+        // Capability Overrides (for testing/debugging)
+        defaults.put("gpuBackendOverrideVersion", false);
+        defaults.put("gpuBackendForcedVersionMajor", 0);
+        defaults.put("gpuBackendForcedVersionMinor", 0);
+        defaults.put("gpuBackendDisableExtensions", false);
+        defaults.put("gpuBackendDisabledExtensionList", new String[0]);
+        
+        // Backend-Specific Settings
+        defaults.put("gpuBackendVulkanValidation", false);
+        defaults.put("gpuBackendVulkanDebugUtils", false);
+        defaults.put("gpuBackendMetalValidation", false);
+        defaults.put("gpuBackendDirectXDebugLayer", false);
+        defaults.put("gpuBackendOpenGLDebugContext", false);
+        
+        // Hot-Reload & Development
+        defaults.put("gpuBackendEnableHotReload", false);
+        defaults.put("gpuBackendAutoDetectChanges", false);
+        defaults.put("gpuBackendReloadOnDriverUpdate", false);
+        
+        // Diagnostics
+        defaults.put("gpuBackendEnableProfiling", false);
+        defaults.put("gpuBackendLogSelectionProcess", true);
+        defaults.put("gpuBackendLogCapabilities", true);
+        defaults.put("gpuBackendDumpFullReport", false);
+
+        // ─── DeepMix Integration ─────────────────────────────────────────────────────
+        // Controls how Astralis interacts with the DeepMix mixin loading framework.
+        // These are safe to leave at defaults unless you're debugging mixin conflicts.
+        defaults.put("deepmixEnabled",                true);   // Master switch for DeepMix integration
+        defaults.put("deepmixLogQueuedConfigs",       true);   // Log each config DeepMix queues
+        defaults.put("deepmixLogHijacks",             true);   // Log if IMixinConfigHijacker fires
+        defaults.put("deepmixUseEarlyLoader",         true);   // Register via IEarlyMixinLoader (required for GL hooks)
+        defaults.put("deepmixUseLateLoader",          false);  // Register via ILateMixinLoader (optional compat mixins)
+        defaults.put("deepmixAutoResolveConflicts",   true);   // Auto-resolve loader priority conflicts
+        defaults.put("deepmixPriority",               1000);   // Our loader priority (shader-pack tier)
+        defaults.put("deepmixAllowSpongeForgePatch",  true);   // Apply SpongeForgeFixer if SpongeForge is present
+        defaults.put("deepmixAllowMixinExtrasFix",    true);   // Apply MixinExtrasFixer for ASM 5.0.x compat
+        defaults.put("deepmixAllowAncientModPatch",   true);   // Patch mods that load mixins incorrectly
+        defaults.put("deepmixLateConfigs",            new String[0]); // Extra configs for late loader (empty = none)
+
+        // ─── Mini_DirtyRoom Integration ───────────────────────────────────────────────
+        // Controls Astralis interaction with the Mini_DirtyRoom modernization layer.
+        // MDR handles: LWJGL 3.4.0 override, Java 25 relaunch, Android compat, native extraction.
+        defaults.put("mdrEnabled",                   true);    // Master switch: load MDR bootstrap
+        defaults.put("mdrLogBootstrap",              true);    // Log MDR phase-by-phase boot output
+        defaults.put("mdrAutoUpgradeJava",           true);    // Let MDR relaunch on Java 25 if needed
+        defaults.put("mdrDownloadJRE",               true);    // Allow MDR to download JRE 25 if missing
+        defaults.put("mdrDownloadLWJGL",             true);    // Allow MDR to download LWJGL 3.4.0 jars
+        defaults.put("mdrVerifyChecksums",           true);    // SHA-256 verify downloaded artifacts
+        defaults.put("mdrOverrideFilesOnDisk",       false);   // Nuclear option: overwrite launcher LWJGL jars
+        defaults.put("mdrAndroidMode",               false);   // Force Android code paths even on desktop
+        defaults.put("mdrDownloadTimeoutSecs",       60);      // Per-download HTTP timeout in seconds
+        defaults.put("mdrNativeLoadRetries",         3);       // Retries for native library loading
+        defaults.put("mdrBootstrapTimeoutMs",        10000);   // How long AstralisCore waits for MDR ready
+        defaults.put("mdrLwjglMirrorUrl",            "");      // Custom LWJGL download mirror (blank = Maven Central)
+        defaults.put("mdrJreMirrorUrl",              "");      // Custom JRE download mirror (blank = Adoptium)
+        
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // Integration Modules - Performance Optimizations
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        
+        // PhotonEngine - Light-speed rendering optimizations (Java 25 FFM)
+        defaults.put("photonEngineEnabled",              false);   // Master toggle for PhotonEngine
+        defaults.put("photonEnhancedBatching",           true);    // Enhanced vertex batching
+        defaults.put("photonFontAtlasResize",            true);    // Dynamic font atlas resizing
+        defaults.put("photonMapAtlasGeneration",         true);    // Map atlas generation
+        defaults.put("photonTextTranslucencySkip",       true);    // Skip text translucency checks
+        defaults.put("photonFastTextLookup",             true);    // Fast text rendering lookup
+        defaults.put("photonFramebufferOptimization",    true);    // Framebuffer switch elimination
+        defaults.put("photonZeroCopyUpload",             true);    // Zero-copy buffer uploads (FFM)
+        defaults.put("photonParallelBatching",           true);    // Parallel batch processing
+        defaults.put("photonFixAppleGPUUpload",          true);    // Fix for Apple GPU uploads
+        
+        // ShortStack - Parallel recipe matching engine (Java 25)
+        defaults.put("shortStackEnabled",                false);   // Master toggle for ShortStack
+        defaults.put("shortStackParallelRecipes",        true);    // Parallel recipe matching
+        defaults.put("shortStackRecipeCache",            true);    // Recipe result caching
+        defaults.put("shortStackVirtualThreads",         true);    // Use virtual threads (Java 21+)
+        defaults.put("shortStackOptimizationLevel",      2);       // 0=off, 1=basic, 2=aggressive
+        
+        // Neon - Advanced lighting optimizations (Java 25)
+        defaults.put("neonEnabled",                      false);   // Master toggle for Neon
+        defaults.put("neonNativeLightEngine",            true);    // Native light calculation engine
+        defaults.put("neonSpatialIndexing",              true);    // Spatial light indexing
+        defaults.put("neonTemporalSmoothing",            true);    // Temporal light smoothing
+        defaults.put("neonAsyncLightUpdates",            true);    // Asynchronous light updates
+        defaults.put("neonLumenBridge",                  true);    // Bridge to Lumen system
+        
+        // AllTheLeaksReborn - Memory leak detection & fixes
+        defaults.put("allTheLeaksEnabled",               false);   // Master toggle for AllTheLeaks
+        defaults.put("leaksMemoryMonitoring",            true);    // Monitor memory usage
+        defaults.put("leaksLeakTracking",                true);    // Track potential leaks
+        defaults.put("leaksAutoCleanup",                 true);    // Automatic cleanup
+        defaults.put("leaksReportingLevel",              1);       // 0=off, 1=summary, 2=detailed
+        
+        // BlueCore - Core optimizations (Java 25)
+        defaults.put("blueCoreEnabled",                  false);   // Master toggle for BlueCore
+        defaults.put("blueCoreHighPerfLogging",          true);    // High-performance logging system
+        defaults.put("blueCoreThreadOptimizations",      true);    // Thread-local optimizations
+        defaults.put("blueCoreAllocationMinimization",   true);    // Minimize allocations
+        
+        // Bolt - Thread & performance enhancements (Java 25)
+        defaults.put("boltEnabled",                      false);   // Master toggle for Bolt
+        defaults.put("boltThreadOptimizations",          true);    // Thread pool optimizations
+        defaults.put("boltVirtualThreads",               true);    // Use virtual threads (Java 21+)
+        defaults.put("boltTaskScheduling",               true);    // Advanced task scheduling
+        defaults.put("boltConcurrencyLevel",             2);       // 0=single, 1=moderate, 2=aggressive
+        
+        // ChunkMotion - Chunk animation system
+        defaults.put("chunkMotionEnabled",               false);   // Master toggle for ChunkMotion
+        defaults.put("chunkAnimationMode",               "hybrid");// Animation mode: below, above, hybrid, horizontal, fade
+        defaults.put("chunkEasingFunction",              "cubic"); // Easing: linear, quad, cubic, quart, quint, sine, expo, circ, elastic, bounce
+        defaults.put("chunkAnimationDuration",           1000);    // Animation duration in milliseconds
+        defaults.put("chunkRenderOptimization",          true);    // Optimize chunk rendering during animation
+        
+        // GoodOptimizations - General optimizations
+        defaults.put("goodOptEnabled",                   false);   // Master toggle for GoodOptimizations
+        defaults.put("goodOptLightmapCache",             true);    // Lightmap caching
+        defaults.put("goodOptRenderOptimizations",       true);    // General render optimizations
+        defaults.put("goodOptMemoryOptimizations",       true);    // Memory usage optimizations
+        
+        // Haku - EXPERIMENTAL Valkyrie rewrite (NOT RECOMMENDED - EXTREMELY EXPERIMENTAL)
+        // WARNING: Haku is an experimental rewrite of the Valkyrie mod and is NOT production-ready.
+        // This module is highly unstable and may cause crashes, world corruption, or other issues.
+        // Enable at your own risk - not worth using in most cases.
+        defaults.put("hakuEnabled",                      false);   // Master toggle (KEEP DISABLED)
+        defaults.put("hakuExperimentalFeatures",         false);   // Enable experimental features (DANGEROUS)
+        defaults.put("hakuDebugMode",                    false);   // Debug mode for troubleshooting
+        defaults.put("hakuWarningAcknowledged",          false);   // Must acknowledge risks to enable
+        
+        // Lavender - OptiFine compatibility layer (NOT RECOMMENDED - LEGAL CONCERNS)
+        // WARNING: Lavender attempts OptiFine compatibility but faces significant limitations.
+        // OptiFine is closed-source, and legally we cannot reverse-engineer its internals
+        // without violating its license. Current features are based on observable behavior
+        // and publicly documented APIs only. Many OptiFine features CANNOT be replicated.
+        // Expect limited functionality and potential compatibility issues.
+        defaults.put("lavenderEnabled",                  false);   // Master toggle (NOT RECOMMENDED)
+        defaults.put("lavenderVisualizationMode",        true);    // Safe visualization-only features
+        defaults.put("lavenderShaderEmulation",          false);   // EXPERIMENTAL shader emulation (limited)
+        defaults.put("lavenderTextureOptimizations",     true);    // Safe texture optimizations
+        defaults.put("lavenderCompatWarnings",           true);    // Show compatibility warnings
+        defaults.put("lavenderLegalNoticeShown",         false);   // Legal notice acknowledgment
+        
+        // Lumen - Lighting engine optimizations
+        defaults.put("lumenEnabled",                     false);   // Master toggle for Lumen
+        defaults.put("lumenLightingEngine",              true);    // Advanced lighting engine
+        defaults.put("lumenBlockLightOptimizations",     true);    // Block light optimizations
+        defaults.put("lumenSkyLightOptimizations",       true);    // Sky light optimizations
+        defaults.put("lumenAsyncLightUpdates",           true);    // Asynchronous light updates
+        defaults.put("lumenCacheLightData",              true);    // Cache light calculations
+        
+        // MagnetismCore - Physics & memory optimizations (Java 25 FFM)
+        defaults.put("magnetismCoreEnabled",             false);   // Master toggle for MagnetismCore
+        defaults.put("magnetismNativeMemory",            true);    // Native memory management (FFM)
+        defaults.put("magnetismPhysicsOptimizations",    true);    // Physics calculations optimization
+        defaults.put("magnetismMemoryPooling",           true);    // Memory pooling system
+        defaults.put("magnetismZeroCopyOperations",      true);    // Zero-copy operations (FFM)
+        
+        // Asto - Modern VintageFix rewrite (Java 25 + LWJGL 3.3.6)
+        defaults.put("astoEnabled",                      false);   // Master toggle for Asto
+        defaults.put("astoDynamicResourceLoading",       true);    // Parallel texture/model loading
+        defaults.put("astoLazyAtlasStitching",           true);    // Lazy texture atlas stitching
+        defaults.put("astoChunkOptimizations",           true);    // Chunk management optimizations
+        defaults.put("astoBytecodeTransformCaching",     true);    // Transformer pipeline caching
+        defaults.put("astoMemoryOptimizations",          true);    // Texture deduplication & memory opts
+        defaults.put("astoConcurrentModelBaking",        true);    // Concurrent model baking
+        defaults.put("astoJarDiscoveryCaching",          true);    // JAR discovery caching
+        defaults.put("astoFastCollections",              true);    // Lock-free concurrent collections
+        
+        // Fluorine - Additional optimizations
+        defaults.put("fluorineEnabled",                  false);   // Master toggle for Fluorine
+        defaults.put("fluorineRenderOptimizations",      true);    // Render pipeline optimizations
+        defaults.put("fluorineMemoryOptimizations",      true);    // Memory usage optimizations
+        defaults.put("fluorineThreadOptimizations",      true);    // Threading optimizations
+        
+        // LegacyFix - Legacy compatibility fixes
+        defaults.put("legacyFixEnabled",                 false);   // Master toggle for LegacyFix
+        defaults.put("legacyCompatibilityMode",          true);    // Enable compatibility mode
+        defaults.put("legacyFixCrashPrevention",         true);    // Crash prevention patches
+        defaults.put("legacyFixMemoryLeaks",             true);    // Fix known memory leaks
+        
+        // SnowyASM - Advanced memory & performance optimization
+        defaults.put("snowyASMEnabled",                  false);   // Master toggle for SnowyASM
+        defaults.put("snowyStringDeduplication",         true);    // String deduplication (<50ns)
+        defaults.put("snowyZeroAllocationPaths",         true);    // Zero-allocation rendering paths
+        defaults.put("snowyLockFreeConcurrency",         true);    // Lock-free concurrent structures
+        defaults.put("snowyMemoryReduction",             true);    // 30-50% memory reduction
+        
+        // JIT Optimization System
+        defaults.put("jitEnabled",                       false);   // Master toggle for JIT optimizations
+        defaults.put("jitHelperEnabled",                 true);    // JIT helper utilities
+        defaults.put("jitInjectEnabled",                 true);    // JIT injection system
+        defaults.put("jitUniversalPatcherEnabled",       true);    // Universal bytecode patcher
+        defaults.put("jitAggressiveOptimization",        false);   // Aggressive JIT optimization (may be unstable)
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════════
@@ -907,6 +1406,201 @@ public final class Config {
             writeValue(writer, "trustDriverVersion");
             writeValue(writer, "enableWrapperQuirks");
 
+            writer.write("\n");
+            writer.write("# ═══════════════════════════════════════════════════════════════\n");
+            writer.write("# DeepMix Integration\n");
+            writer.write("# ═══════════════════════════════════════════════════════════════\n");
+            writeValue(writer, "deepmixEnabled");
+            writeValue(writer, "deepmixLogQueuedConfigs");
+            writeValue(writer, "deepmixLogHijacks");
+            writeValue(writer, "deepmixUseEarlyLoader");
+            writeValue(writer, "deepmixUseLateLoader");
+            writeValue(writer, "deepmixAutoResolveConflicts");
+            writeValue(writer, "deepmixPriority");
+            writeValue(writer, "deepmixAllowSpongeForgePatch");
+            writeValue(writer, "deepmixAllowMixinExtrasFix");
+            writeValue(writer, "deepmixAllowAncientModPatch");
+
+            writer.write("\n");
+            writer.write("# ═══════════════════════════════════════════════════════════════\n");
+            writer.write("# Mini_DirtyRoom Integration\n");
+            writer.write("# ═══════════════════════════════════════════════════════════════\n");
+            writeValue(writer, "mdrEnabled");
+            writeValue(writer, "mdrLogBootstrap");
+            writeValue(writer, "mdrAutoUpgradeJava");
+            writeValue(writer, "mdrDownloadJRE");
+            writeValue(writer, "mdrDownloadLWJGL");
+            writeValue(writer, "mdrVerifyChecksums");
+            writeValue(writer, "mdrOverrideFilesOnDisk");
+            writeValue(writer, "mdrAndroidMode");
+            writeValue(writer, "mdrDownloadTimeoutSecs");
+            writeValue(writer, "mdrNativeLoadRetries");
+            writeValue(writer, "mdrBootstrapTimeoutMs");
+            writeValue(writer, "mdrLwjglMirrorUrl");
+            writeValue(writer, "mdrJreMirrorUrl");
+            
+            writer.write("\n");
+            writer.write("# ═══════════════════════════════════════════════════════════════\n");
+            writer.write("# Integration Modules - Performance Optimizations\n");
+            writer.write("# All modules are DISABLED by default for maximum compatibility\n");
+            writer.write("# ═══════════════════════════════════════════════════════════════\n");
+            writer.write("\n");
+            
+            writer.write("# PhotonEngine - Light-speed rendering optimizations (Java 25 FFM)\n");
+            writeValue(writer, "photonEngineEnabled");
+            writeValue(writer, "photonEnhancedBatching");
+            writeValue(writer, "photonFontAtlasResize");
+            writeValue(writer, "photonMapAtlasGeneration");
+            writeValue(writer, "photonTextTranslucencySkip");
+            writeValue(writer, "photonFastTextLookup");
+            writeValue(writer, "photonFramebufferOptimization");
+            writeValue(writer, "photonZeroCopyUpload");
+            writeValue(writer, "photonParallelBatching");
+            writeValue(writer, "photonFixAppleGPUUpload");
+            writer.write("\n");
+            
+            writer.write("# ShortStack - Parallel recipe matching engine (Java 25)\n");
+            writeValue(writer, "shortStackEnabled");
+            writeValue(writer, "shortStackParallelRecipes");
+            writeValue(writer, "shortStackRecipeCache");
+            writeValue(writer, "shortStackVirtualThreads");
+            writeValue(writer, "shortStackOptimizationLevel");
+            writer.write("\n");
+            
+            writer.write("# Neon - Advanced lighting optimizations (Java 25)\n");
+            writeValue(writer, "neonEnabled");
+            writeValue(writer, "neonNativeLightEngine");
+            writeValue(writer, "neonSpatialIndexing");
+            writeValue(writer, "neonTemporalSmoothing");
+            writeValue(writer, "neonAsyncLightUpdates");
+            writeValue(writer, "neonLumenBridge");
+            writer.write("\n");
+            
+            writer.write("# AllTheLeaksReborn - Memory leak detection & fixes\n");
+            writeValue(writer, "allTheLeaksEnabled");
+            writeValue(writer, "leaksMemoryMonitoring");
+            writeValue(writer, "leaksLeakTracking");
+            writeValue(writer, "leaksAutoCleanup");
+            writeValue(writer, "leaksReportingLevel");
+            writer.write("\n");
+            
+            writer.write("# BlueCore - Core optimizations (Java 25)\n");
+            writeValue(writer, "blueCoreEnabled");
+            writeValue(writer, "blueCoreHighPerfLogging");
+            writeValue(writer, "blueCoreThreadOptimizations");
+            writeValue(writer, "blueCoreAllocationMinimization");
+            writer.write("\n");
+            
+            writer.write("# Bolt - Thread & performance enhancements (Java 25)\n");
+            writeValue(writer, "boltEnabled");
+            writeValue(writer, "boltThreadOptimizations");
+            writeValue(writer, "boltVirtualThreads");
+            writeValue(writer, "boltTaskScheduling");
+            writeValue(writer, "boltConcurrencyLevel");
+            writer.write("\n");
+            
+            writer.write("# ChunkMotion - Chunk animation system\n");
+            writeValue(writer, "chunkMotionEnabled");
+            writeValue(writer, "chunkAnimationMode");
+            writeValue(writer, "chunkEasingFunction");
+            writeValue(writer, "chunkAnimationDuration");
+            writeValue(writer, "chunkRenderOptimization");
+            writer.write("\n");
+            
+            writer.write("# GoodOptimizations - General optimizations\n");
+            writeValue(writer, "goodOptEnabled");
+            writeValue(writer, "goodOptLightmapCache");
+            writeValue(writer, "goodOptRenderOptimizations");
+            writeValue(writer, "goodOptMemoryOptimizations");
+            writer.write("\n");
+            
+            writer.write("# ─────────────────────────────────────────────────────────────────\n");
+            writer.write("# WARNING: Haku - EXTREMELY EXPERIMENTAL (NOT RECOMMENDED)\n");
+            writer.write("# Haku is an experimental rewrite of Valkyrie - highly unstable!\n");
+            writer.write("# May cause crashes, world corruption, or other serious issues.\n");
+            writer.write("# Enable at your own risk - not worth using in most cases.\n");
+            writer.write("# ─────────────────────────────────────────────────────────────────\n");
+            writeValue(writer, "hakuEnabled");
+            writeValue(writer, "hakuExperimentalFeatures");
+            writeValue(writer, "hakuDebugMode");
+            writeValue(writer, "hakuWarningAcknowledged");
+            writer.write("\n");
+            
+            writer.write("# ─────────────────────────────────────────────────────────────────\n");
+            writer.write("# WARNING: Lavender - OptiFine Compatibility (NOT RECOMMENDED)\n");
+            writer.write("# Lavender attempts OptiFine compatibility but faces limitations.\n");
+            writer.write("# OptiFine is closed-source - legally we cannot reverse-engineer\n");
+            writer.write("# its internals without violating its license. Current features\n");
+            writer.write("# are based on observable behavior and public APIs only.\n");
+            writer.write("# Many OptiFine features CANNOT be replicated. Expect issues.\n");
+            writer.write("# ─────────────────────────────────────────────────────────────────\n");
+            writeValue(writer, "lavenderEnabled");
+            writeValue(writer, "lavenderVisualizationMode");
+            writeValue(writer, "lavenderShaderEmulation");
+            writeValue(writer, "lavenderTextureOptimizations");
+            writeValue(writer, "lavenderCompatWarnings");
+            writeValue(writer, "lavenderLegalNoticeShown");
+            writer.write("\n");
+            
+            writer.write("# Lumen - Lighting engine optimizations\n");
+            writeValue(writer, "lumenEnabled");
+            writeValue(writer, "lumenLightingEngine");
+            writeValue(writer, "lumenBlockLightOptimizations");
+            writeValue(writer, "lumenSkyLightOptimizations");
+            writeValue(writer, "lumenAsyncLightUpdates");
+            writeValue(writer, "lumenCacheLightData");
+            writer.write("\n");
+            
+            writer.write("# MagnetismCore - Physics & memory optimizations (Java 25 FFM)\n");
+            writeValue(writer, "magnetismCoreEnabled");
+            writeValue(writer, "magnetismNativeMemory");
+            writeValue(writer, "magnetismPhysicsOptimizations");
+            writeValue(writer, "magnetismMemoryPooling");
+            writeValue(writer, "magnetismZeroCopyOperations");
+            writer.write("\n");
+            
+            writer.write("# Asto - Modern VintageFix rewrite (Java 25 + LWJGL 3.3.6)\n");
+            writer.write("# 3-5x faster resource loading, 30-60% VRAM reduction\n");
+            writeValue(writer, "astoEnabled");
+            writeValue(writer, "astoDynamicResourceLoading");
+            writeValue(writer, "astoLazyAtlasStitching");
+            writeValue(writer, "astoChunkOptimizations");
+            writeValue(writer, "astoBytecodeTransformCaching");
+            writeValue(writer, "astoMemoryOptimizations");
+            writeValue(writer, "astoConcurrentModelBaking");
+            writeValue(writer, "astoJarDiscoveryCaching");
+            writeValue(writer, "astoFastCollections");
+            writer.write("\n");
+            
+            writer.write("# Fluorine - Additional optimizations\n");
+            writeValue(writer, "fluorineEnabled");
+            writeValue(writer, "fluorineRenderOptimizations");
+            writeValue(writer, "fluorineMemoryOptimizations");
+            writeValue(writer, "fluorineThreadOptimizations");
+            writer.write("\n");
+            
+            writer.write("# LegacyFix - Legacy compatibility fixes\n");
+            writeValue(writer, "legacyFixEnabled");
+            writeValue(writer, "legacyCompatibilityMode");
+            writeValue(writer, "legacyFixCrashPrevention");
+            writeValue(writer, "legacyFixMemoryLeaks");
+            writer.write("\n");
+            
+            writer.write("# SnowyASM - Advanced memory & performance (<50ns string dedup)\n");
+            writeValue(writer, "snowyASMEnabled");
+            writeValue(writer, "snowyStringDeduplication");
+            writeValue(writer, "snowyZeroAllocationPaths");
+            writeValue(writer, "snowyLockFreeConcurrency");
+            writeValue(writer, "snowyMemoryReduction");
+            writer.write("\n");
+            
+            writer.write("# JIT Optimization System - Bytecode optimization & patching\n");
+            writeValue(writer, "jitEnabled");
+            writeValue(writer, "jitHelperEnabled");
+            writeValue(writer, "jitInjectEnabled");
+            writeValue(writer, "jitUniversalPatcherEnabled");
+            writeValue(writer, "jitAggressiveOptimization");
+
         } catch (IOException e) {
             System.err.println("[Astralis Config] Save failed: " + e.getMessage());
         }
@@ -981,6 +1675,64 @@ public final class Config {
             }
             if (getBoolean("useSPIRV") && !UniversalCapabilities.SPIRV.hasGLSPIRV) {
                 values.put("useSPIRV", false);
+            }
+
+            // ── Validate new Vulkan extended features ─────────────────────────────────
+            if (UniversalCapabilities.Vulkan.isAvailable) {
+                // External memory: need OS-matching extension
+                if (getBoolean("vulkanEnableExternalMemoryWin32") &&
+                        !UniversalCapabilities.Vulkan.hasExternalMemoryWin32) {
+                    values.put("vulkanEnableExternalMemoryWin32", false);
+                }
+                if (getBoolean("vulkanEnableExternalMemoryFd") &&
+                        !UniversalCapabilities.Vulkan.hasExternalMemoryFd) {
+                    values.put("vulkanEnableExternalMemoryFd", false);
+                }
+                // VRS
+                if (getBoolean("vulkanEnableVRS") &&
+                        !UniversalCapabilities.Vulkan.hasFragmentShadingRate) {
+                    values.put("vulkanEnableVRS", false);
+                }
+                if (getBoolean("vulkanEnableShadingRateImage") &&
+                        !UniversalCapabilities.Vulkan.hasShadingRateImage) {
+                    values.put("vulkanEnableShadingRateImage", false);
+                }
+                // Mesh shaders
+                if (getBoolean("vulkanEnableMeshShaderEXT") &&
+                        !UniversalCapabilities.Vulkan.hasMeshShaderEXT) {
+                    values.put("vulkanEnableMeshShaderEXT", false);
+                    values.put("vulkanEnableTaskShaders", false);
+                }
+                // Ray tracing
+                if (getBoolean("vulkanEnableRayTracing") &&
+                        !UniversalCapabilities.Vulkan.hasRayTracingPipeline) {
+                    values.put("vulkanEnableRayTracing", false);
+                    values.put("vulkanEnableAccelerationStructure", false);
+                }
+                if (getBoolean("vulkanEnableRayQuery") &&
+                        !UniversalCapabilities.Vulkan.hasRayQuery) {
+                    values.put("vulkanEnableRayQuery", false);
+                }
+                if (getBoolean("vulkanEnableRayTracingPositionFetch") &&
+                        !UniversalCapabilities.Vulkan.hasRayTracingPositionFetch) {
+                    values.put("vulkanEnableRayTracingPositionFetch", false);
+                }
+                // Push descriptors
+                if (getBoolean("vulkanEnablePushDescriptors") &&
+                        !UniversalCapabilities.Vulkan.hasPushDescriptors) {
+                    values.put("vulkanEnablePushDescriptors", false);
+                }
+                // Pipeline library
+                if (getBoolean("vulkanEnableGraphicsPipelineLibrary") &&
+                        !UniversalCapabilities.Vulkan.hasGraphicsPipelineLibrary) {
+                    values.put("vulkanEnableGraphicsPipelineLibrary", false);
+                    values.put("vulkanEnablePipelineLibrary", false);
+                }
+                // Mesh shaders (old key, keep in sync)
+                if (getBoolean("vulkanEnableMeshShaders") &&
+                        !UniversalCapabilities.Vulkan.hasMeshShader) {
+                    values.put("vulkanEnableMeshShaders", false);
+                }
             }
 
         } catch (Throwable t) {
@@ -1299,6 +2051,37 @@ public final class Config {
         if (!initialized.get()) initialize();
         return getLong("vulkanMaxDeviceMemoryMB");
     }
+
+    // ─── Vulkan Extended Features (VulkanCallMapper-aligned) ───
+    public static boolean isVulkanEnableExternalMemory()            { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableExternalMemory"); }
+    public static boolean isVulkanEnableExternalMemoryWin32()       { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableExternalMemoryWin32"); }
+    public static boolean isVulkanEnableExternalMemoryFd()          { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableExternalMemoryFd"); }
+
+    public static boolean isVulkanEnableVRS()                       { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableVRS"); }
+    public static boolean isVulkanEnableShadingRateImage()          { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableShadingRateImage"); }
+    public static int     getVulkanShadingRateTileSize()            { if (!initialized.get()) initialize(); return getInt("vulkanShadingRateTileSize"); }
+
+    public static boolean isVulkanEnableMeshShaderEXT()             { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableMeshShaderEXT"); }
+    public static boolean isVulkanEnableTaskShaders()               { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableTaskShaders"); }
+
+    public static boolean isVulkanEnableRayTracing()                { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableRayTracing"); }
+    public static boolean isVulkanEnableRayQuery()                  { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableRayQuery"); }
+    public static boolean isVulkanEnableAccelerationStructure()     { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableAccelerationStructure"); }
+    public static boolean isVulkanEnableRayTracingPositionFetch()   { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableRayTracingPositionFetch"); }
+    public static int     getVulkanScratchBufferSizeMB()            { if (!initialized.get()) initialize(); return getInt("vulkanScratchBufferSizeMB"); }
+
+    public static boolean isVulkanEnableAsyncTransfer()             { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableAsyncTransfer"); }
+    public static boolean isVulkanEnableAsyncCompute()              { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableAsyncCompute"); }
+    public static int     getVulkanAsyncStagingRingBufferMB()       { if (!initialized.get()) initialize(); return getInt("vulkanAsyncStagingRingBufferMB"); }
+
+    public static boolean isVulkanEnableKTX2Pipeline()              { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableKTX2Pipeline"); }
+    public static String  getVulkanKTX2CacheDirectory()             { if (!initialized.get()) initialize(); return getString("vulkanKTX2CacheDirectory"); }
+    public static int     getVulkanKTX2MaxCacheSizeMB()             { if (!initialized.get()) initialize(); return getInt("vulkanKTX2MaxCacheSizeMB"); }
+
+    public static boolean isVulkanEnablePushDescriptors()           { if (!initialized.get()) initialize(); return getBoolean("vulkanEnablePushDescriptors"); }
+    public static boolean isVulkanEnablePipelineLibrary()           { if (!initialized.get()) initialize(); return getBoolean("vulkanEnablePipelineLibrary"); }
+    public static boolean isVulkanEnableGraphicsPipelineLibrary()   { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableGraphicsPipelineLibrary"); }
+    public static boolean isVulkanEnableComputeMipmaps()            { if (!initialized.get()) initialize(); return getBoolean("vulkanEnableComputeMipmaps"); }
 
     // ═══════════════════════════════════════════════════════════════════════════════════
     // SECTION 12.6: GETTERS - DirectX Settings (DX 9-12.2 Support)
@@ -2248,6 +3031,298 @@ public final class Config {
     public static String getGLSLValidationMode() { if (!initialized.get()) initialize(); return getString("glslValidationMode"); }
 
     // ═══════════════════════════════════════════════════════════════════════════════════
+    // SECTION 12D: DEEPMIX INTEGRATION GETTERS
+    // ═══════════════════════════════════════════════════════════════════════════════════
+
+    /** Whether DeepMix integration is enabled at all. */
+    public static boolean isDeepMixEnabled() {
+        return getBoolean("deepmixEnabled");
+    }
+
+    /** Log each mixin config that DeepMix queues on our behalf. */
+    public static boolean isDeepMixLogQueuedConfigs() {
+        return getBoolean("deepmixLogQueuedConfigs");
+    }
+
+    /** Log when IMixinConfigHijacker intercepts a conflicting config. */
+    public static boolean isDeepMixLogHijacks() {
+        return getBoolean("deepmixLogHijacks");
+    }
+
+    /**
+     * Register via {@code IEarlyMixinLoader} (coremod phase).
+     * <p>Must be true — Astralis GL hooks require early registration.</p>
+     */
+    public static boolean isDeepMixUseEarlyLoader() {
+        return getBoolean("deepmixUseEarlyLoader");
+    }
+
+    /**
+     * Register via {@code ILateMixinLoader} (mod-construction phase).
+     * <p>Only needed if we add optional late-phase compat mixins in the future.</p>
+     */
+    public static boolean isDeepMixUseLateLoader() {
+        return getBoolean("deepmixUseLateLoader");
+    }
+
+    /** Automatically resolve loader priority conflicts with other mods. */
+    public static boolean isDeepMixAutoResolveConflicts() {
+        return getBoolean("deepmixAutoResolveConflicts");
+    }
+
+    /**
+     * Our effective loader priority.
+     * <p>1000 = shader-pack tier, above Sodium (750) and vanilla handlers (500).</p>
+     */
+    public static int getDeepMixPriority() {
+        return getInt("deepmixPriority");
+    }
+
+    /** Allow DeepMix to apply SpongeForgeFixer if SpongeForge is detected. */
+    public static boolean isDeepMixAllowSpongeForgePatch() {
+        return getBoolean("deepmixAllowSpongeForgePatch");
+    }
+
+    /** Allow DeepMix to apply MixinExtrasFixer for ASM 5.0.x handle bugs. */
+    public static boolean isDeepMixAllowMixinExtrasFix() {
+        return getBoolean("deepmixAllowMixinExtrasFix");
+    }
+
+    /** Allow DeepMix to patch ancient mods that load mixins incorrectly. */
+    public static boolean isDeepMixAllowAncientModPatch() {
+        return getBoolean("deepmixAllowAncientModPatch");
+    }
+
+    /**
+     * Extra mixin config files to register via the late loader.
+     * <p>Empty by default — only populated if {@code deepmixUseLateLoader=true}
+     * and late configs are explicitly listed in {@code astralis.cfg}.</p>
+     */
+    public static String[] getDeepMixLateConfigs() {
+        Object raw = values.getOrDefault("deepmixLateConfigs", defaults.get("deepmixLateConfigs"));
+        if (raw instanceof String[] arr) return arr;
+        if (raw instanceof String s && !s.isEmpty()) return s.split(",");
+        return new String[0];
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    // SECTION 12E: MINI_DIRTYROOM INTEGRATION GETTERS
+    // ═══════════════════════════════════════════════════════════════════════════════════
+
+    /** Master switch — false disables all MDR bootstrap logic. */
+    public static boolean isMDREnabled() {
+        return getBoolean("mdrEnabled");
+    }
+
+    /** Log each MDR bootstrap phase to the init report. */
+    public static boolean isMDRLogBootstrap() {
+        return getBoolean("mdrLogBootstrap");
+    }
+
+    /**
+     * Allow MDR to relaunch the JVM on Java {@code TARGET_JAVA_VERSION} if the
+     * current runtime is older.
+     */
+    public static boolean isMDRAutoUpgradeJava() {
+        return getBoolean("mdrAutoUpgradeJava");
+    }
+
+    /** Allow MDR to download a JRE if no suitable local installation is found. */
+    public static boolean isMDRDownloadJRE() {
+        return getBoolean("mdrDownloadJRE");
+    }
+
+    /** Allow MDR to download LWJGL 3.4.0 jars from Maven Central if missing. */
+    public static boolean isMDRDownloadLWJGL() {
+        return getBoolean("mdrDownloadLWJGL");
+    }
+
+    /** Verify SHA-256 checksums of every downloaded artifact before use. */
+    public static boolean isMDRVerifyChecksums() {
+        return getBoolean("mdrVerifyChecksums");
+    }
+
+    /**
+     * Nuclear option: overwrite launcher LWJGL jar files on disk.
+     * <p>Android-only intent; dangerous on desktop. Off by default.</p>
+     */
+    public static boolean isMDROverrideFilesOnDisk() {
+        return getBoolean("mdrOverrideFilesOnDisk");
+    }
+
+    /**
+     * Force Android code paths even when running on desktop.
+     * <p>Only useful for testing Android launcher compatibility on a PC.</p>
+     */
+    public static boolean isMDRAndroidMode() {
+        return getBoolean("mdrAndroidMode");
+    }
+
+    /** Per-download HTTP timeout in seconds. */
+    public static int getMDRDownloadTimeoutSecs() {
+        return getInt("mdrDownloadTimeoutSecs");
+    }
+
+    /** How many times to retry native library loading before giving up. */
+    public static int getMDRNativeLoadRetries() {
+        return getInt("mdrNativeLoadRetries");
+    }
+
+    /**
+     * Milliseconds {@code AstralisCore#onMixinConfigQueued} waits for MDR
+     * bootstrap to complete before proceeding regardless.
+     */
+    public static int getMDRBootstrapTimeoutMs() {
+        return getInt("mdrBootstrapTimeoutMs");
+    }
+
+    /**
+     * Custom LWJGL download mirror URL.
+     * <p>Empty string = use Maven Central ({@code repo1.maven.org}).</p>
+     */
+    public static String getMDRLwjglMirrorUrl() {
+        return getString("mdrLwjglMirrorUrl");
+    }
+
+    /**
+     * Custom JRE download mirror URL.
+     * <p>Empty string = use Adoptium ({@code api.adoptium.net}).</p>
+     */
+    public static String getMDRJreMirrorUrl() {
+        return getString("mdrJreMirrorUrl");
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    // SECTION 12B: INTEGRATION MODULES CONFIGURATION
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    
+    // PhotonEngine
+    public static boolean isPhotonEngineEnabled() { return getBoolean("photonEngineEnabled"); }
+    public static boolean isPhotonEnhancedBatchingEnabled() { return getBoolean("photonEnhancedBatching"); }
+    public static boolean isPhotonFontAtlasResizeEnabled() { return getBoolean("photonFontAtlasResize"); }
+    public static boolean isPhotonMapAtlasGenerationEnabled() { return getBoolean("photonMapAtlasGeneration"); }
+    public static boolean isPhotonTextTranslucencySkipEnabled() { return getBoolean("photonTextTranslucencySkip"); }
+    public static boolean isPhotonFastTextLookupEnabled() { return getBoolean("photonFastTextLookup"); }
+    public static boolean isPhotonFramebufferOptimizationEnabled() { return getBoolean("photonFramebufferOptimization"); }
+    public static boolean isPhotonZeroCopyUploadEnabled() { return getBoolean("photonZeroCopyUpload"); }
+    public static boolean isPhotonParallelBatchingEnabled() { return getBoolean("photonParallelBatching"); }
+    public static boolean isPhotonFixAppleGPUUploadEnabled() { return getBoolean("photonFixAppleGPUUpload"); }
+    
+    // ShortStack
+    public static boolean isShortStackEnabled() { return getBoolean("shortStackEnabled"); }
+    public static boolean isShortStackParallelRecipesEnabled() { return getBoolean("shortStackParallelRecipes"); }
+    public static boolean isShortStackRecipeCacheEnabled() { return getBoolean("shortStackRecipeCache"); }
+    public static boolean isShortStackVirtualThreadsEnabled() { return getBoolean("shortStackVirtualThreads"); }
+    public static int getShortStackOptimizationLevel() { return getInt("shortStackOptimizationLevel"); }
+    
+    // Neon
+    public static boolean isNeonEnabled() { return getBoolean("neonEnabled"); }
+    public static boolean isNeonNativeLightEngineEnabled() { return getBoolean("neonNativeLightEngine"); }
+    public static boolean isNeonSpatialIndexingEnabled() { return getBoolean("neonSpatialIndexing"); }
+    public static boolean isNeonTemporalSmoothingEnabled() { return getBoolean("neonTemporalSmoothing"); }
+    public static boolean isNeonAsyncLightUpdatesEnabled() { return getBoolean("neonAsyncLightUpdates"); }
+    public static boolean isNeonLumenBridgeEnabled() { return getBoolean("neonLumenBridge"); }
+    
+    // AllTheLeaksReborn
+    public static boolean isAllTheLeaksEnabled() { return getBoolean("allTheLeaksEnabled"); }
+    public static boolean isLeaksMemoryMonitoringEnabled() { return getBoolean("leaksMemoryMonitoring"); }
+    public static boolean isLeaksLeakTrackingEnabled() { return getBoolean("leaksLeakTracking"); }
+    public static boolean isLeaksAutoCleanupEnabled() { return getBoolean("leaksAutoCleanup"); }
+    public static int getLeaksReportingLevel() { return getInt("leaksReportingLevel"); }
+    
+    // BlueCore
+    public static boolean isBlueCoreEnabled() { return getBoolean("blueCoreEnabled"); }
+    public static boolean isBlueCoreHighPerfLoggingEnabled() { return getBoolean("blueCoreHighPerfLogging"); }
+    public static boolean isBlueCoreThreadOptimizationsEnabled() { return getBoolean("blueCoreThreadOptimizations"); }
+    public static boolean isBlueCoreAllocationMinimizationEnabled() { return getBoolean("blueCoreAllocationMinimization"); }
+    
+    // Bolt
+    public static boolean isBoltEnabled() { return getBoolean("boltEnabled"); }
+    public static boolean isBoltThreadOptimizationsEnabled() { return getBoolean("boltThreadOptimizations"); }
+    public static boolean isBoltVirtualThreadsEnabled() { return getBoolean("boltVirtualThreads"); }
+    public static boolean isBoltTaskSchedulingEnabled() { return getBoolean("boltTaskScheduling"); }
+    public static int getBoltConcurrencyLevel() { return getInt("boltConcurrencyLevel"); }
+    
+    // ChunkMotion
+    public static boolean isChunkMotionEnabled() { return getBoolean("chunkMotionEnabled"); }
+    public static String getChunkAnimationMode() { return getString("chunkAnimationMode"); }
+    public static String getChunkEasingFunction() { return getString("chunkEasingFunction"); }
+    public static int getChunkAnimationDuration() { return getInt("chunkAnimationDuration"); }
+    public static boolean isChunkRenderOptimizationEnabled() { return getBoolean("chunkRenderOptimization"); }
+    
+    // GoodOptimizations
+    public static boolean isGoodOptEnabled() { return getBoolean("goodOptEnabled"); }
+    public static boolean isGoodOptLightmapCacheEnabled() { return getBoolean("goodOptLightmapCache"); }
+    public static boolean isGoodOptRenderOptimizationsEnabled() { return getBoolean("goodOptRenderOptimizations"); }
+    public static boolean isGoodOptMemoryOptimizationsEnabled() { return getBoolean("goodOptMemoryOptimizations"); }
+    
+    // Haku - EXPERIMENTAL (NOT RECOMMENDED)
+    public static boolean isHakuEnabled() { return getBoolean("hakuEnabled"); }
+    public static boolean isHakuExperimentalFeaturesEnabled() { return getBoolean("hakuExperimentalFeatures"); }
+    public static boolean isHakuDebugModeEnabled() { return getBoolean("hakuDebugMode"); }
+    public static boolean isHakuWarningAcknowledged() { return getBoolean("hakuWarningAcknowledged"); }
+    
+    // Lavender - OptiFine compatibility (NOT RECOMMENDED - LEGAL CONCERNS)
+    public static boolean isLavenderEnabled() { return getBoolean("lavenderEnabled"); }
+    public static boolean isLavenderVisualizationModeEnabled() { return getBoolean("lavenderVisualizationMode"); }
+    public static boolean isLavenderShaderEmulationEnabled() { return getBoolean("lavenderShaderEmulation"); }
+    public static boolean isLavenderTextureOptimizationsEnabled() { return getBoolean("lavenderTextureOptimizations"); }
+    public static boolean isLavenderCompatWarningsEnabled() { return getBoolean("lavenderCompatWarnings"); }
+    public static boolean isLavenderLegalNoticeShown() { return getBoolean("lavenderLegalNoticeShown"); }
+    
+    // Lumen
+    public static boolean isLumenEnabled() { return getBoolean("lumenEnabled"); }
+    public static boolean isLumenLightingEngineEnabled() { return getBoolean("lumenLightingEngine"); }
+    public static boolean isLumenBlockLightOptimizationsEnabled() { return getBoolean("lumenBlockLightOptimizations"); }
+    public static boolean isLumenSkyLightOptimizationsEnabled() { return getBoolean("lumenSkyLightOptimizations"); }
+    public static boolean isLumenAsyncLightUpdatesEnabled() { return getBoolean("lumenAsyncLightUpdates"); }
+    public static boolean isLumenCacheLightDataEnabled() { return getBoolean("lumenCacheLightData"); }
+    
+    // MagnetismCore
+    public static boolean isMagnetismCoreEnabled() { return getBoolean("magnetismCoreEnabled"); }
+    public static boolean isMagnetismNativeMemoryEnabled() { return getBoolean("magnetismNativeMemory"); }
+    public static boolean isMagnetismPhysicsOptimizationsEnabled() { return getBoolean("magnetismPhysicsOptimizations"); }
+    public static boolean isMagnetismMemoryPoolingEnabled() { return getBoolean("magnetismMemoryPooling"); }
+    public static boolean isMagnetismZeroCopyOperationsEnabled() { return getBoolean("magnetismZeroCopyOperations"); }
+    
+    // Asto - Modern VintageFix rewrite
+    public static boolean isAstoEnabled() { return getBoolean("astoEnabled"); }
+    public static boolean isAstoDynamicResourceLoadingEnabled() { return getBoolean("astoDynamicResourceLoading"); }
+    public static boolean isAstoLazyAtlasStitchingEnabled() { return getBoolean("astoLazyAtlasStitching"); }
+    public static boolean isAstoChunkOptimizationsEnabled() { return getBoolean("astoChunkOptimizations"); }
+    public static boolean isAstoBytecodeTransformCachingEnabled() { return getBoolean("astoBytecodeTransformCaching"); }
+    public static boolean isAstoMemoryOptimizationsEnabled() { return getBoolean("astoMemoryOptimizations"); }
+    public static boolean isAstoConcurrentModelBakingEnabled() { return getBoolean("astoConcurrentModelBaking"); }
+    public static boolean isAstoJarDiscoveryCachingEnabled() { return getBoolean("astoJarDiscoveryCaching"); }
+    public static boolean isAstoFastCollectionsEnabled() { return getBoolean("astoFastCollections"); }
+    
+    // Fluorine
+    public static boolean isFluorineEnabled() { return getBoolean("fluorineEnabled"); }
+    public static boolean isFluorineRenderOptimizationsEnabled() { return getBoolean("fluorineRenderOptimizations"); }
+    public static boolean isFluorineMemoryOptimizationsEnabled() { return getBoolean("fluorineMemoryOptimizations"); }
+    public static boolean isFluorineThreadOptimizationsEnabled() { return getBoolean("fluorineThreadOptimizations"); }
+    
+    // LegacyFix
+    public static boolean isLegacyFixEnabled() { return getBoolean("legacyFixEnabled"); }
+    public static boolean isLegacyCompatibilityModeEnabled() { return getBoolean("legacyCompatibilityMode"); }
+    public static boolean isLegacyFixCrashPreventionEnabled() { return getBoolean("legacyFixCrashPrevention"); }
+    public static boolean isLegacyFixMemoryLeaksEnabled() { return getBoolean("legacyFixMemoryLeaks"); }
+    
+    // SnowyASM
+    public static boolean isSnowyASMEnabled() { return getBoolean("snowyASMEnabled"); }
+    public static boolean isSnowyStringDeduplicationEnabled() { return getBoolean("snowyStringDeduplication"); }
+    public static boolean isSnowyZeroAllocationPathsEnabled() { return getBoolean("snowyZeroAllocationPaths"); }
+    public static boolean isSnowyLockFreeConcurrencyEnabled() { return getBoolean("snowyLockFreeConcurrency"); }
+    public static boolean isSnowyMemoryReductionEnabled() { return getBoolean("snowyMemoryReduction"); }
+    
+    // JIT Optimization System
+    public static boolean isJITEnabled() { return getBoolean("jitEnabled"); }
+    public static boolean isJITHelperEnabled() { return getBoolean("jitHelperEnabled"); }
+    public static boolean isJITInjectEnabled() { return getBoolean("jitInjectEnabled"); }
+    public static boolean isJITUniversalPatcherEnabled() { return getBoolean("jitUniversalPatcherEnabled"); }
+    public static boolean isJITAggressiveOptimizationEnabled() { return getBoolean("jitAggressiveOptimization"); }
+
+    // ═══════════════════════════════════════════════════════════════════════════════════
     // SECTION 13: GENERIC GETTERS
     // ═══════════════════════════════════════════════════════════════════════════════════
 
@@ -2406,6 +3481,307 @@ public final class Config {
             }
         }
     }
+    
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    // ECS CONFIGURATION GETTERS
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    
+    // Core Settings
+    public static boolean isECSEnabled() { if (!initialized.get()) initialize(); return getBoolean("ecsEnabled"); }
+    public static int getECSThreadCount() { if (!initialized.get()) initialize(); return getInt("ecsThreadCount"); }
+    public static boolean isECSUseVirtualThreads() { if (!initialized.get()) initialize(); return getBoolean("ecsUseVirtualThreads"); }
+    public static int getECSChunkSize() { if (!initialized.get()) initialize(); return getInt("ecsChunkSize"); }
+    public static int getECSInitialCapacity() { if (!initialized.get()) initialize(); return getInt("ecsInitialCapacity"); }
+    public static boolean isECSUseOffHeap() { if (!initialized.get()) initialize(); return getBoolean("ecsUseOffHeap"); }
+    public static boolean isECSTrackChanges() { if (!initialized.get()) initialize(); return getBoolean("ecsTrackChanges"); }
+    public static boolean isECSEnableGpu() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableGpu"); }
+    public static boolean isECSBuildEdgeGraph() { if (!initialized.get()) initialize(); return getBoolean("ecsBuildEdgeGraph"); }
+    public static int getECSParallelThreshold() { if (!initialized.get()) initialize(); return getInt("ecsParallelThreshold"); }
+    
+    // Struct Flattening
+    public static boolean isECSEnableStructFlattening() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableStructFlattening"); }
+    public static int getECSStructFlatteningSizeHint() { if (!initialized.get()) initialize(); return getInt("ecsStructFlatteningSizeHint"); }
+    public static boolean isECSStructFlatteningUseMethodHandles() { if (!initialized.get()) initialize(); return getBoolean("ecsStructFlatteningUseMethodHandles"); }
+    public static boolean isECSStructFlatteningUseLambdaMetafactory() { if (!initialized.get()) initialize(); return getBoolean("ecsStructFlatteningUseLambdaMetafactory"); }
+    public static boolean isECSStructFlatteningCacheAccessors() { if (!initialized.get()) initialize(); return getBoolean("ecsStructFlatteningCacheAccessors"); }
+    
+    // Component Discovery
+    public static boolean isECSAutoScanComponents() { if (!initialized.get()) initialize(); return getBoolean("ecsAutoScanComponents"); }
+    public static String[] getECSComponentScanPackages() { 
+        if (!initialized.get()) initialize(); 
+        Object packages = values.getOrDefault("ecsComponentScanPackages", defaults.get("ecsComponentScanPackages"));
+        return packages instanceof String[] ? (String[]) packages : new String[0];
+    }
+    public static boolean isECSComponentScanAtStartup() { if (!initialized.get()) initialize(); return getBoolean("ecsComponentScanAtStartup"); }
+    public static boolean isECSComponentScanParallel() { if (!initialized.get()) initialize(); return getBoolean("ecsComponentScanParallel"); }
+    public static boolean isECSComponentCacheResults() { if (!initialized.get()) initialize(); return getBoolean("ecsComponentCacheResults"); }
+    
+    // Dynamic Archetypes
+    public static boolean isECSEnableDynamicArchetypes() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableDynamicArchetypes"); }
+    public static int getECSArchetypePoolSize() { if (!initialized.get()) initialize(); return getInt("ecsArchetypePoolSize"); }
+    public static double getECSArchetypeGrowthFactor() { if (!initialized.get()) initialize(); return getDouble("ecsArchetypeGrowthFactor"); }
+    public static int getECSArchetypeMigrationBatchSize() { if (!initialized.get()) initialize(); return getInt("ecsArchetypeMigrationBatchSize"); }
+    public static boolean isECSArchetypeEdgeOptimization() { if (!initialized.get()) initialize(); return getBoolean("ecsArchetypeEdgeOptimization"); }
+    public static boolean isECSArchetypeCompactionEnabled() { if (!initialized.get()) initialize(); return getBoolean("ecsArchetypeCompactionEnabled"); }
+    public static double getECSArchetypeCompactionThreshold() { if (!initialized.get()) initialize(); return getDouble("ecsArchetypeCompactionThreshold"); }
+    
+    // System Scheduling
+    public static boolean isECSUseTarjanScheduling() { if (!initialized.get()) initialize(); return getBoolean("ecsUseTarjanScheduling"); }
+    public static boolean isECSDetectCycles() { if (!initialized.get()) initialize(); return getBoolean("ecsDetectCycles"); }
+    public static boolean isECSThrowOnCycles() { if (!initialized.get()) initialize(); return getBoolean("ecsThrowOnCycles"); }
+    public static boolean isECSUseDagOptimization() { if (!initialized.get()) initialize(); return getBoolean("ecsUseDagOptimization"); }
+    public static int getECSMaxSystemDependencyDepth() { if (!initialized.get()) initialize(); return getInt("ecsMaxSystemDependencyDepth"); }
+    public static String getECSSystemSchedulingStrategy() { if (!initialized.get()) initialize(); return getString("ecsSystemSchedulingStrategy"); }
+    public static boolean isECSEnableWorkStealing() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableWorkStealing"); }
+    public static int getECSWorkStealingQueueSize() { if (!initialized.get()) initialize(); return getInt("ecsWorkStealingQueueSize"); }
+    
+    // Type-Safe Injection
+    public static boolean isECSEnableDataInjection() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableDataInjection"); }
+    public static boolean isECSInjectAtRegistration() { if (!initialized.get()) initialize(); return getBoolean("ecsInjectAtRegistration"); }
+    public static boolean isECSValidateInjectionTypes() { if (!initialized.get()) initialize(); return getBoolean("ecsValidateInjectionTypes"); }
+    public static boolean isECSInjectReadOnlyArrays() { if (!initialized.get()) initialize(); return getBoolean("ecsInjectReadOnlyArrays"); }
+    public static boolean isECSCacheInjectionHandles() { if (!initialized.get()) initialize(); return getBoolean("ecsCacheInjectionHandles"); }
+    
+    // Performance & Profiling
+    public static boolean isECSEnableProfiler() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableProfiler"); }
+    public static boolean isECSEnableJFR() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableJFR"); }
+    public static int getECSProfilerSamplingInterval() { if (!initialized.get()) initialize(); return getInt("ecsProfilerSamplingInterval"); }
+    public static int getECSProfilerRecordHistory() { if (!initialized.get()) initialize(); return getInt("ecsProfilerRecordHistory"); }
+    public static boolean isECSEnableMemoryStats() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableMemoryStats"); }
+    public static boolean isECSEnableWorkloadEstimation() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableWorkloadEstimation"); }
+    public static double getECSWorkloadEstimatorEMA() { if (!initialized.get()) initialize(); return getDouble("ecsWorkloadEstimatorEMA"); }
+    
+    // Compatibility & Safety
+    public static boolean isECSCompatibilityMode() { if (!initialized.get()) initialize(); return getBoolean("ecsCompatibilityMode"); }
+    public static boolean isECSVanillaFallback() { if (!initialized.get()) initialize(); return getBoolean("ecsVanillaFallback"); }
+    public static boolean isECSSafeMode() { if (!initialized.get()) initialize(); return getBoolean("ecsSafeMode"); }
+    public static boolean isECSEnableAssertions() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableAssertions"); }
+    public static int getECSMaxEntityCount() { if (!initialized.get()) initialize(); return getInt("ecsMaxEntityCount"); }
+    public static int getECSMaxComponentTypes() { if (!initialized.get()) initialize(); return getInt("ecsMaxComponentTypes"); }
+    public static int getECSMaxSystemCount() { if (!initialized.get()) initialize(); return getInt("ecsMaxSystemCount"); }
+    
+    // Multi-Mod Ecosystem
+    public static boolean isECSEnableModIsolation() { if (!initialized.get()) initialize(); return getBoolean("ecsEnableModIsolation"); }
+    public static boolean isECSForgeEventIntegration() { if (!initialized.get()) initialize(); return getBoolean("ecsForgeEventIntegration"); }
+    public static boolean isECSAllowModComponentRegistration() { if (!initialized.get()) initialize(); return getBoolean("ecsAllowModComponentRegistration"); }
+    public static boolean isECSAllowModSystemRegistration() { if (!initialized.get()) initialize(); return getBoolean("ecsAllowModSystemRegistration"); }
+    public static int getECSModRegistrationTimeout() { if (!initialized.get()) initialize(); return getInt("ecsModRegistrationTimeout"); }
+    
+    // Debug & Development
+    public static boolean isECSDebugMode() { if (!initialized.get()) initialize(); return getBoolean("ecsDebugMode"); }
+    public static boolean isECSDebugPrintArchetypes() { if (!initialized.get()) initialize(); return getBoolean("ecsDebugPrintArchetypes"); }
+    public static boolean isECSDebugPrintDependencyGraph() { if (!initialized.get()) initialize(); return getBoolean("ecsDebugPrintDependencyGraph"); }
+    public static boolean isECSDebugValidateEveryFrame() { if (!initialized.get()) initialize(); return getBoolean("ecsDebugValidateEveryFrame"); }
+    public static boolean isECSDebugTrackAllocations() { if (!initialized.get()) initialize(); return getBoolean("ecsDebugTrackAllocations"); }
+    public static int getECSDebugDumpStatsInterval() { if (!initialized.get()) initialize(); return getInt("ecsDebugDumpStatsInterval"); }
+    
+    // Minecraft-Specific
+    public static boolean isECSMinecraftEntityOptimizer() { if (!initialized.get()) initialize(); return getBoolean("ecsMinecraftEntityOptimizer"); }
+    public static boolean isECSMinecraftChunkStreamer() { if (!initialized.get()) initialize(); return getBoolean("ecsMinecraftChunkStreamer"); }
+    public static boolean isECSMinecraftRedstoneOptimizer() { if (!initialized.get()) initialize(); return getBoolean("ecsMinecraftRedstoneOptimizer"); }
+    public static boolean isECSMinecraftSpatialOptimizer() { if (!initialized.get()) initialize(); return getBoolean("ecsMinecraftSpatialOptimizer"); }
+    public static boolean isECSMinecraftBridgeEnabled() { if (!initialized.get()) initialize(); return getBoolean("ecsMinecraftBridgeEnabled"); }
+    public static boolean isECSMinecraftBatchEntityTick() { if (!initialized.get()) initialize(); return getBoolean("ecsMinecraftBatchEntityTick"); }
+    public static boolean isECSMinecraftParallelEntityTick() { if (!initialized.get()) initialize(); return getBoolean("ecsMinecraftParallelEntityTick"); }
+    public static int getECSMinecraftEntityTickBatchSize() { if (!initialized.get()) initialize(); return getInt("ecsMinecraftEntityTickBatchSize"); }
+    
+    // Bridge Systems
+    public static boolean isBridgeCircuitBreakerEnabled() { if (!initialized.get()) initialize(); return getBoolean("bridgeCircuitBreakerEnabled"); }
+    public static int getBridgeCircuitBreakerFailureThreshold() { if (!initialized.get()) initialize(); return getInt("bridgeCircuitBreakerFailureThreshold"); }
+    public static long getBridgeCircuitBreakerResetTimeout() { if (!initialized.get()) initialize(); return (long) values.getOrDefault("bridgeCircuitBreakerResetTimeout", 5000L); }
+    public static boolean isBridgeInterpolationEnabled() { if (!initialized.get()) initialize(); return getBoolean("bridgeInterpolationEnabled"); }
+    public static String getBridgeInterpolationMode() { if (!initialized.get()) initialize(); return getString("bridgeInterpolationMode"); }
+    public static boolean isBridgeSyncSystemsEnabled() { if (!initialized.get()) initialize(); return getBoolean("bridgeSyncSystemsEnabled"); }
+    public static int getBridgeSyncBatchSize() { if (!initialized.get()) initialize(); return getInt("bridgeSyncBatchSize"); }
+    
+    // Culling Manager
+    public static boolean isCullingManagerEnabled() { if (!initialized.get()) initialize(); return getBoolean("cullingManagerEnabled"); }
+    public static String getCullingTier() { if (!initialized.get()) initialize(); return getString("cullingTier"); }
+    public static boolean isCullingEnableFrustum() { if (!initialized.get()) initialize(); return getBoolean("cullingEnableFrustum"); }
+    public static boolean isCullingEnableOcclusion() { if (!initialized.get()) initialize(); return getBoolean("cullingEnableOcclusion"); }
+    public static boolean isCullingEnableDistance() { if (!initialized.get()) initialize(); return getBoolean("cullingEnableDistance"); }
+    public static double getCullingMaxDistance() { if (!initialized.get()) initialize(); return getDouble("cullingMaxDistance"); }
+    public static int getCullingOcclusionQueryBatchSize() { if (!initialized.get()) initialize(); return getInt("cullingOcclusionQueryBatchSize"); }
+    public static boolean isCullingUseHiZ() { if (!initialized.get()) initialize(); return getBoolean("cullingUseHiZ"); }
+    
+    // Indirect Draw Manager
+    public static boolean isIndirectDrawEnabled() { if (!initialized.get()) initialize(); return getBoolean("indirectDrawEnabled"); }
+    public static int getIndirectDrawMaxDrawCalls() { if (!initialized.get()) initialize(); return getInt("indirectDrawMaxDrawCalls"); }
+    public static String getIndirectDrawBatchingStrategy() { if (!initialized.get()) initialize(); return getString("indirectDrawBatchingStrategy"); }
+    public static boolean isIndirectDrawEnableMultiDraw() { if (!initialized.get()) initialize(); return getBoolean("indirectDrawEnableMultiDraw"); }
+    public static int getIndirectDrawCommandBufferSizeMB() { if (!initialized.get()) initialize(); return getInt("indirectDrawCommandBufferSizeMB"); }
+    
+    // Draw Pool
+    public static boolean isDrawPoolEnabled() { if (!initialized.get()) initialize(); return getBoolean("drawPoolEnabled"); }
+    public static int getDrawPoolMaxDrawCalls() { if (!initialized.get()) initialize(); return getInt("drawPoolMaxDrawCalls"); }
+    public static int getDrawPoolMaxClusters() { if (!initialized.get()) initialize(); return getInt("drawPoolMaxClusters"); }
+    public static String getDrawPoolClusteringStrategy() { if (!initialized.get()) initialize(); return getString("drawPoolClusteringStrategy"); }
+    
+    // Resolution Manager Mode
+    public static String getResolutionManagerMode() { 
+        if (!initialized.get()) initialize(); 
+        return values.getOrDefault("resolutionManagerMode", "ADAPTIVE").toString();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    // RENDER ENGINE CONFIGURATION GETTERS
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    
+    // Render Graph
+    public static boolean isRenderGraphEnabled() { if (!initialized.get()) initialize(); return getBoolean("renderGraphEnabled"); }
+    public static int getRenderGraphMaxFramesInFlight() { if (!initialized.get()) initialize(); return getInt("renderGraphMaxFramesInFlight"); }
+    public static int getRenderGraphCommandBufferPoolSize() { if (!initialized.get()) initialize(); return getInt("renderGraphCommandBufferPoolSize"); }
+    public static boolean isRenderGraphEnablePassCulling() { if (!initialized.get()) initialize(); return getBoolean("renderGraphEnablePassCulling"); }
+    public static boolean isRenderGraphEnablePassMerging() { if (!initialized.get()) initialize(); return getBoolean("renderGraphEnablePassMerging"); }
+    public static boolean isRenderGraphEnableMemoryAliasing() { if (!initialized.get()) initialize(); return getBoolean("renderGraphEnableMemoryAliasing"); }
+    public static boolean isRenderGraphEnableParallelRecording() { if (!initialized.get()) initialize(); return getBoolean("renderGraphEnableParallelRecording"); }
+    public static boolean isRenderGraphEnableSplitBarriers() { if (!initialized.get()) initialize(); return getBoolean("renderGraphEnableSplitBarriers"); }
+    public static boolean isRenderGraphEnableGPUProfiling() { if (!initialized.get()) initialize(); return getBoolean("renderGraphEnableGPUProfiling"); }
+    public static int getRenderGraphParallelRecordingThreshold() { if (!initialized.get()) initialize(); return getInt("renderGraphParallelRecordingThreshold"); }
+    public static boolean isRenderGraphAutoCompile() { if (!initialized.get()) initialize(); return getBoolean("renderGraphAutoCompile"); }
+    public static boolean isRenderGraphValidateEveryFrame() { if (!initialized.get()) initialize(); return getBoolean("renderGraphValidateEveryFrame"); }
+    
+    // Render System
+    public static boolean isRenderSystemEnabled() { if (!initialized.get()) initialize(); return getBoolean("renderSystemEnabled"); }
+    public static boolean isRenderSystemUseECS() { if (!initialized.get()) initialize(); return getBoolean("renderSystemUseECS"); }
+    public static int getRenderSystemBatchSize() { if (!initialized.get()) initialize(); return getInt("renderSystemBatchSize"); }
+    public static boolean isRenderSystemEnableInstancing() { if (!initialized.get()) initialize(); return getBoolean("renderSystemEnableInstancing"); }
+    public static boolean isRenderSystemEnableIndirectDraw() { if (!initialized.get()) initialize(); return getBoolean("renderSystemEnableIndirectDraw"); }
+    public static boolean isRenderSystemEnableGPUCulling() { if (!initialized.get()) initialize(); return getBoolean("renderSystemEnableGPUCulling"); }
+    public static boolean isRenderSystemEnableOcclusionCulling() { if (!initialized.get()) initialize(); return getBoolean("renderSystemEnableOcclusionCulling"); }
+    public static boolean isRenderSystemEnableFrustumCulling() { if (!initialized.get()) initialize(); return getBoolean("renderSystemEnableFrustumCulling"); }
+    public static int getRenderSystemCullingBatchSize() { if (!initialized.get()) initialize(); return getInt("renderSystemCullingBatchSize"); }
+    public static int getRenderSystemMaxDrawCalls() { if (!initialized.get()) initialize(); return getInt("renderSystemMaxDrawCalls"); }
+    public static boolean isRenderSystemEnableSortByMaterial() { if (!initialized.get()) initialize(); return getBoolean("renderSystemEnableSortByMaterial"); }
+    public static boolean isRenderSystemEnableSortByDepth() { if (!initialized.get()) initialize(); return getBoolean("renderSystemEnableSortByDepth"); }
+    public static boolean isRenderSystemEnableStateCache() { if (!initialized.get()) initialize(); return getBoolean("renderSystemEnableStateCache"); }
+    public static int getRenderSystemStateCacheSize() { if (!initialized.get()) initialize(); return getInt("renderSystemStateCacheSize"); }
+    
+    // Render Pipeline
+    public static boolean isRenderPipelineEnableVBO() { if (!initialized.get()) initialize(); return getBoolean("renderPipelineEnableVBO"); }
+    public static boolean isRenderPipelineEnableVAO() { if (!initialized.get()) initialize(); return getBoolean("renderPipelineEnableVAO"); }
+    public static boolean isRenderPipelineEnableUBO() { if (!initialized.get()) initialize(); return getBoolean("renderPipelineEnableUBO"); }
+    public static boolean isRenderPipelineEnableSSBO() { if (!initialized.get()) initialize(); return getBoolean("renderPipelineEnableSSBO"); }
+    public static boolean isRenderPipelineEnableDSA() { if (!initialized.get()) initialize(); return getBoolean("renderPipelineEnableDSA"); }
+    public static boolean isRenderPipelineEnablePersistentMapping() { if (!initialized.get()) initialize(); return getBoolean("renderPipelineEnablePersistentMapping"); }
+    public static int getRenderPipelineBufferSizeMB() { if (!initialized.get()) initialize(); return getInt("renderPipelineBufferSizeMB"); }
+    public static int getRenderPipelineUniformBufferSize() { if (!initialized.get()) initialize(); return getInt("renderPipelineUniformBufferSize"); }
+    public static int getRenderPipelineVertexBufferSize() { if (!initialized.get()) initialize(); return getInt("renderPipelineVertexBufferSize"); }
+    public static int getRenderPipelineIndexBufferSize() { if (!initialized.get()) initialize(); return getInt("renderPipelineIndexBufferSize"); }
+    
+    // Render State
+    public static boolean isRenderStateEnableDepthTest() { if (!initialized.get()) initialize(); return getBoolean("renderStateEnableDepthTest"); }
+    public static boolean isRenderStateEnableBlending() { if (!initialized.get()) initialize(); return getBoolean("renderStateEnableBlending"); }
+    public static boolean isRenderStateEnableCulling() { if (!initialized.get()) initialize(); return getBoolean("renderStateEnableCulling"); }
+    public static String getRenderStateDepthFunc() { if (!initialized.get()) initialize(); return getString("renderStateDepthFunc"); }
+    public static String getRenderStateBlendSrc() { if (!initialized.get()) initialize(); return getString("renderStateBlendSrc"); }
+    public static String getRenderStateBlendDst() { if (!initialized.get()) initialize(); return getString("renderStateBlendDst"); }
+    public static String getRenderStateCullFace() { if (!initialized.get()) initialize(); return getString("renderStateCullFace"); }
+    public static String getRenderStateFrontFace() { if (!initialized.get()) initialize(); return getString("renderStateFrontFace"); }
+    public static boolean isRenderStateEnableDepthWrite() { if (!initialized.get()) initialize(); return getBoolean("renderStateEnableDepthWrite"); }
+    public static boolean isRenderStateEnableColorWrite() { if (!initialized.get()) initialize(); return getBoolean("renderStateEnableColorWrite"); }
+    public static boolean isRenderStateEnableStencilTest() { if (!initialized.get()) initialize(); return getBoolean("renderStateEnableStencilTest"); }
+    
+    // Resolution Manager
+    public static boolean isResolutionManagerEnabled() { if (!initialized.get()) initialize(); return getBoolean("resolutionManagerEnabled"); }
+    public static boolean isResolutionManagerDynamicScaling() { if (!initialized.get()) initialize(); return getBoolean("resolutionManagerDynamicScaling"); }
+    public static double getResolutionManagerMinScale() { if (!initialized.get()) initialize(); return getDouble("resolutionManagerMinScale"); }
+    public static double getResolutionManagerMaxScale() { if (!initialized.get()) initialize(); return getDouble("resolutionManagerMaxScale"); }
+    public static double getResolutionManagerTargetFrameTime() { if (!initialized.get()) initialize(); return getDouble("resolutionManagerTargetFrameTime"); }
+    public static double getResolutionManagerScaleStep() { if (!initialized.get()) initialize(); return getDouble("resolutionManagerScaleStep"); }
+    public static int getResolutionManagerAdaptiveInterval() { if (!initialized.get()) initialize(); return getInt("resolutionManagerAdaptiveInterval"); }
+    public static boolean isResolutionManagerEnableTAA() { if (!initialized.get()) initialize(); return getBoolean("resolutionManagerEnableTAA"); }
+    public static boolean isResolutionManagerEnableFSR() { if (!initialized.get()) initialize(); return getBoolean("resolutionManagerEnableFSR"); }
+    public static boolean isResolutionManagerEnableDLSS() { if (!initialized.get()) initialize(); return getBoolean("resolutionManagerEnableDLSS"); }
+    
+    // Render Bridge
+    public static boolean isRenderBridgeEnabled() { if (!initialized.get()) initialize(); return getBoolean("renderBridgeEnabled"); }
+    public static boolean isRenderBridgeMinecraftCompatibility() { if (!initialized.get()) initialize(); return getBoolean("renderBridgeMinecraftCompatibility"); }
+    public static boolean isRenderBridgeEnableChunkRendering() { if (!initialized.get()) initialize(); return getBoolean("renderBridgeEnableChunkRendering"); }
+    public static boolean isRenderBridgeEnableEntityRendering() { if (!initialized.get()) initialize(); return getBoolean("renderBridgeEnableEntityRendering"); }
+    public static boolean isRenderBridgeEnableTileEntityRendering() { if (!initialized.get()) initialize(); return getBoolean("renderBridgeEnableTileEntityRendering"); }
+    public static boolean isRenderBridgeEnableParticleRendering() { if (!initialized.get()) initialize(); return getBoolean("renderBridgeEnableParticleRendering"); }
+    public static int getRenderBridgeChunkBatchSize() { if (!initialized.get()) initialize(); return getInt("renderBridgeChunkBatchSize"); }
+    public static int getRenderBridgeEntityBatchSize() { if (!initialized.get()) initialize(); return getInt("renderBridgeEntityBatchSize"); }
+    
+    // Advanced Rendering Features
+    public static boolean isRenderEnableHDR() { if (!initialized.get()) initialize(); return getBoolean("renderEnableHDR"); }
+    public static boolean isRenderEnableBloom() { if (!initialized.get()) initialize(); return getBoolean("renderEnableBloom"); }
+    public static boolean isRenderEnableSSAO() { if (!initialized.get()) initialize(); return getBoolean("renderEnableSSAO"); }
+    public static boolean isRenderEnableSSR() { if (!initialized.get()) initialize(); return getBoolean("renderEnableSSR"); }
+    public static boolean isRenderEnableShadows() { if (!initialized.get()) initialize(); return getBoolean("renderEnableShadows"); }
+    public static int getRenderShadowMapSize() { if (!initialized.get()) initialize(); return getInt("renderShadowMapSize"); }
+    public static int getRenderShadowCascades() { if (!initialized.get()) initialize(); return getInt("renderShadowCascades"); }
+    public static boolean isRenderEnableCSM() { if (!initialized.get()) initialize(); return getBoolean("renderEnableCSM"); }
+    public static boolean isRenderEnablePBR() { if (!initialized.get()) initialize(); return getBoolean("renderEnablePBR"); }
+    public static boolean isRenderEnableIBL() { if (!initialized.get()) initialize(); return getBoolean("renderEnableIBL"); }
+    
+    // Render Performance & Profiling
+    public static boolean isRenderEnableProfiler() { if (!initialized.get()) initialize(); return getBoolean("renderEnableProfiler"); }
+    public static boolean isRenderEnableGPUTimestamps() { if (!initialized.get()) initialize(); return getBoolean("renderEnableGPUTimestamps"); }
+    public static boolean isRenderEnableDrawCallCounter() { if (!initialized.get()) initialize(); return getBoolean("renderEnableDrawCallCounter"); }
+    public static boolean isRenderEnableStateChangeCounter() { if (!initialized.get()) initialize(); return getBoolean("renderEnableStateChangeCounter"); }
+    public static int getRenderPrintStatsInterval() { if (!initialized.get()) initialize(); return getInt("renderPrintStatsInterval"); }
+    public static double getRenderMaxFrameTime() { if (!initialized.get()) initialize(); return getDouble("renderMaxFrameTime"); }
+    
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    // GPU BACKEND INTEGRATION CONFIGURATION GETTERS
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    
+    // Backend Selection
+    public static String getGPUBackendPreferred() { if (!initialized.get()) initialize(); return getString("gpuBackendPreferred"); }
+    public static boolean isGPUBackendAllowFallback() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendAllowFallback"); }
+    public static String[] getGPUBackendFallbackChain() {
+        if (!initialized.get()) initialize();
+        Object chain = values.getOrDefault("gpuBackendFallbackChain", defaults.get("gpuBackendFallbackChain"));
+        return chain instanceof String[] ? (String[]) chain : new String[0];
+    }
+    public static boolean isGPUBackendRequireMinimumVersion() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendRequireMinimumVersion"); }
+    public static boolean isGPUBackendValidateCapabilities() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendValidateCapabilities"); }
+    
+    // Platform-Specific Preferences
+    public static boolean isGPUBackendWindowsPreferDX() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendWindowsPreferDX"); }
+    public static boolean isGPUBackendMacOSPreferMetal() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendMacOSPreferMetal"); }
+    public static boolean isGPUBackendLinuxPreferVulkan() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendLinuxPreferVulkan"); }
+    public static boolean isGPUBackendAndroidPreferVulkan() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendAndroidPreferVulkan"); }
+    
+    // Feature Requirements
+    public static boolean isGPUBackendRequireComputeShaders() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendRequireComputeShaders"); }
+    public static boolean isGPUBackendRequireGeometryShaders() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendRequireGeometryShaders"); }
+    public static boolean isGPUBackendRequireTessellation() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendRequireTessellation"); }
+    public static boolean isGPUBackendRequireMeshShaders() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendRequireMeshShaders"); }
+    public static boolean isGPUBackendRequireRayTracing() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendRequireRayTracing"); }
+    public static boolean isGPUBackendRequireBindlessTextures() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendRequireBindlessTextures"); }
+    public static boolean isGPUBackendRequireMultiDrawIndirect() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendRequireMultiDrawIndirect"); }
+    
+    // Capability Overrides
+    public static boolean isGPUBackendOverrideVersion() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendOverrideVersion"); }
+    public static int getGPUBackendForcedVersionMajor() { if (!initialized.get()) initialize(); return getInt("gpuBackendForcedVersionMajor"); }
+    public static int getGPUBackendForcedVersionMinor() { if (!initialized.get()) initialize(); return getInt("gpuBackendForcedVersionMinor"); }
+    public static boolean isGPUBackendDisableExtensions() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendDisableExtensions"); }
+    public static String[] getGPUBackendDisabledExtensionList() {
+        if (!initialized.get()) initialize();
+        Object list = values.getOrDefault("gpuBackendDisabledExtensionList", defaults.get("gpuBackendDisabledExtensionList"));
+        return list instanceof String[] ? (String[]) list : new String[0];
+    }
+    
+    // Backend-Specific Settings
+    public static boolean isGPUBackendVulkanValidation() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendVulkanValidation"); }
+    public static boolean isGPUBackendVulkanDebugUtils() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendVulkanDebugUtils"); }
+    public static boolean isGPUBackendMetalValidation() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendMetalValidation"); }
+    public static boolean isGPUBackendDirectXDebugLayer() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendDirectXDebugLayer"); }
+    public static boolean isGPUBackendOpenGLDebugContext() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendOpenGLDebugContext"); }
+    
+    // Hot-Reload & Development
+    public static boolean isGPUBackendEnableHotReload() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendEnableHotReload"); }
+    public static boolean isGPUBackendAutoDetectChanges() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendAutoDetectChanges"); }
+    public static boolean isGPUBackendReloadOnDriverUpdate() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendReloadOnDriverUpdate"); }
+    
+    // Diagnostics
+    public static boolean isGPUBackendEnableProfiling() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendEnableProfiling"); }
+    public static boolean isGPUBackendLogSelectionProcess() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendLogSelectionProcess"); }
+    public static boolean isGPUBackendLogCapabilities() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendLogCapabilities"); }
+    public static boolean isGPUBackendDumpFullReport() { if (!initialized.get()) initialize(); return getBoolean("gpuBackendDumpFullReport"); }
 
     // ═══════════════════════════════════════════════════════════════════════════════════
     // SECTION 16: UTILITIES
@@ -2451,3 +3827,4 @@ public final class Config {
         validateAgainstCapabilities();
     }
 }
+// finish

@@ -1,6 +1,6 @@
 package stellar.snow.astralis.bridge;
 
-import stellar.snow.astralis.ecs.Entity;
+import stellar.snow.astralis.engine.ecs.core.Entity;
 
 import java.lang.foreign.MemorySegment;
 

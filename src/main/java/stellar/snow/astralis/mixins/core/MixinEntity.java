@@ -2,7 +2,7 @@ package stellar.snow.astralis.mixins.core;
 
 import stellar.snow.astralis.bridge.BridgeMixinInterface;
 import stellar.snow.astralis.bridge.MinecraftECSBridge;
-import stellar.snow.astralis.ecs.Entity;
+import stellar.snow.astralis.engine.ecs.core.Entity;
 import stellar.snow.astralis.mixins.util.MixinHelper;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;

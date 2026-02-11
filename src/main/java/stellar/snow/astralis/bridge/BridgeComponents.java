@@ -1,4 +1,4 @@
-package stellar.snow.astralis.nexus.controlpanel;
+package stellar.snow.astralis.bridge;
 
 import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.FloatVector;

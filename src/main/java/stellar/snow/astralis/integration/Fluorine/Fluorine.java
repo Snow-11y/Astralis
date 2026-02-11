@@ -84,8 +84,7 @@ public final class Fluorine {
     private static final AtomicLong totalOptimizations = new AtomicLong(0);
     private static final ConcurrentHashMap<String, PerformanceMetric> metrics = new ConcurrentHashMap<>();
     
-    @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public static void preInit() {
         LOGGER.info("Initializing Fluorine with Java {}", Runtime.version());
         LOGGER.info("SIMD Support: {}", SIMD_AVAILABLE);
         
@@ -116,8 +115,7 @@ public final class Fluorine {
         LOGGER.info("Fluorine initialization complete - {} optimization systems active", getTotalSystemCount());
     }
     
-    @Mod.EventHandler
-    public void postInit(FMLPostInitializationEvent event) {
+    public static void postInit() {
         LOGGER.info("Fluorine post-init - Total optimizations applied: {}", totalOptimizations.get());
         metrics.forEach((name, metric) -> 
             LOGGER.info("  {} - {} calls, avg {}μs", name, metric.calls(), metric.avgMicros())

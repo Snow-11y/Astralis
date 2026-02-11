@@ -33,7 +33,10 @@ import static java.lang.foreign.ValueLayout.*;   // Memory layouts for native in
 import java.util.concurrent.*;                    // Executor framework
 import java.util.concurrent.atomic.*;             // Lock-free primitives
 import java.util.concurrent.locks.*;              // Explicit locks
-import jdk.incubator.concurrent.StructuredTaskScope; // Java 21+ structured concurrency
+import jdk.incubator.concurrent.StructuredTaskScope; 
+import org.apache.logging.log4j.Logger;
+import net.minecraft.world.World;
+import net.minecraft.entity.Entity;// Java 21+ structured concurrency
 
 // ─── Java 22+ Scoped Values (Replacement for ThreadLocal) ───
 import jdk.incubator.concurrent.ScopedValue;     // Java 22+ scoped values
@@ -54575,7 +54578,7 @@ public final class D3D12BackendFactory {
  *    - GUID management for interface identification
  *    - HRESULT error handling with exceptions
  *    - IUnknown interface methods (AddRef, Release, QueryInterface)
- * 
+ *
  * 2. DXGI INFRASTRUCTURE
  *    - DXGIFactory: Factory creation, adapter enumeration
  *    - DXGIAdapter: Hardware detection, memory queries
@@ -54591,4 +54594,4 @@ public final class D3D12BackendFactory {
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════
 // §15.25 END OF PART 15 - SUMMARY
-// ══════════════════════════════════════════════════════════════════════════════════════════════�
+// ══════════════════════════════════════════════════════════════════════════════════════════════

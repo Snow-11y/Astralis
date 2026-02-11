@@ -19,8 +19,6 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -62,22 +60,16 @@ import java.util.stream.Collectors;
 
 public final class AllTheLeaksReborn {
     
-    public static final String MOD_ID = "alltheleaksreborn";
-    public static final String MOD_NAME = "AllTheLeaks Reborn";
-    public static final String VERSION = "2.0.0";
+    public static final Logger LOGGER = LogManager.getLogger("AllTheLeaks Reborn");
+    public static final Path LOCAL_DIR = Paths.get("local", "alltheleaksreborn");
     
-    public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
-    public static final Path LOCAL_DIR = Paths.get("local", MOD_ID);
     
-    @Mod.Instance(MOD_ID)
-    public static AllTheLeaksReborn instance;
     
-    private final Config config = new Config();
-    private final MemoryMonitor memoryMonitor = new MemoryMonitor();
-    private final LeakTracker leakTracker = new LeakTracker();
+    private static final Config config = new Config();
+    private static final MemoryMonitor memoryMonitor = new MemoryMonitor();
+    private static final LeakTracker leakTracker = new LeakTracker();
     
-    @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public static void preInit() {
         config.load();
         LOGGER.info("AllTheLeaks Reborn initialized - Memory leak detection active");
         
@@ -89,7 +81,7 @@ public final class AllTheLeaksReborn {
     }
     
     @Mod.EventHandler
-    public void init(FMLInitializationEvent event) {
+    public static void init() {
         MinecraftForge.EVENT_BUS.register(new GameEventHandler());
         MinecraftForge.EVENT_BUS.register(memoryMonitor);
         MinecraftForge.EVENT_BUS.register(leakTracker);

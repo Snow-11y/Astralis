@@ -28,17 +28,12 @@
  * @version 1.0.0
  */
 
-package net.photonengine.render;
+package stellar.snow.astralis.integration.PhotonEngine;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
@@ -57,30 +52,24 @@ import jdk.incubator.vector.*;
 // ============================================================================
 
 public final class PhotonEngine {
-    public static final String MODID = "photonengine";
-    public static final String NAME = "PhotonEngine";
-    public static final String VERSION = "1.0.0-java25-ffm";
-    
-    private static final Logger LOGGER = LogManager.getLogger(NAME);
+    private static final Logger LOGGER = LogManager.getLogger("PhotonEngine");
     private static PhotonConfiguration config;
     private static RenderOptimizationEngine renderEngine;
     private static GPUInfo gpuInfo;
     
-    @EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public static void preInit() {
         LOGGER.info("""
             ╔════════════════════════════════════════╗
-            ║   PhotonEngine v%s Loading...    ║
+            ║   PhotonEngine v1.0.0 Loading...       ║
             ║    Light-Speed Rendering System        ║
             ║    Powered by Java 25 FFM API          ║
             ╚════════════════════════════════════════╝
-            """.formatted(VERSION));
+            """);
         
         config = PhotonConfiguration.load();
     }
     
-    @EventHandler
-    public void init(FMLInitializationEvent event) {
+    public static void init() {
         // Detect GPU info
         gpuInfo = GPUInfo.detect();
         LOGGER.info("Detected GPU: {} ({})", gpuInfo.model(), gpuInfo.vendor());
@@ -90,8 +79,7 @@ public final class PhotonEngine {
         renderEngine.initialize();
     }
     
-    @EventHandler
-    public void postInit(FMLPostInitializationEvent event) {
+    public static void postInit() {
         var stats = renderEngine.getStatistics();
         
         LOGGER.info("""

@@ -9,6 +9,9 @@
 
 package stellar.snow.astralis.engine.gpu.authority;
 
+import stellar.snow.astralis.api.opengl.backend.OpenGLBackend;
+
+import org.apache.logging.log4j.Logger;
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.time.*;
@@ -1548,9 +1551,17 @@ public final class GPUBackendSelector implements AutoCloseable {
     }
 
     private GPUBackend createOpenGL46Backend() {
-        // Integrates with OpenGLBackend from Part 10
+        // OpenGLBackend is a singleton - must use get() method
         try {
-            return new OpenGLBackend();
+            OpenGLBackend backend = OpenGLBackend.get();
+            // Initialize if not already initialized
+            if (!backend.isInitialized()) {
+                if (!backend.initialize()) {
+                    LOGGER.log(System.Logger.Level.WARNING, "OpenGL backend initialization failed");
+                    return null;
+                }
+            }
+            return backend;
         } catch (Exception e) {
             LOGGER.log(System.Logger.Level.DEBUG, "Failed to create OpenGL 4.6 backend: {0}", e.getMessage());
             return null;

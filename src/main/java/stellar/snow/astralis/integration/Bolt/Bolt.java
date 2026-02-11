@@ -18,10 +18,6 @@
 
 package stellar.snow.astralis.integration.Bolt;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,27 +34,21 @@ import java.util.function.Supplier;
 // ============================================================================
 
 public final class FastBootMod {
-    public static final String MODID = "Bolt";
-    public static final String NAME = "Bolt";
-    public static final String VERSION = "2.0.0-java25";
-    
-    private static final Logger LOGGER = LogManager.getLogger(NAME);
+    private static final Logger LOGGER = LogManager.getLogger("Bolt");
     private static final OptimizationEngine ENGINE = new OptimizationEngine();
     
-    @EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public static void preInit() {
         LOGGER.info("""
             ╔════════════════════════════════════════╗
-            ║     Bolt v%s Loading...      ║
+            ║     Bolt v2.0.0 Loading...             ║
             ║   Java 25 Enhanced Performance Mod    ║
             ╚════════════════════════════════════════╝
-            """.formatted(VERSION));
+            """);
         
         ENGINE.initialize();
     }
     
-    @EventHandler
-    public void init(FMLInitializationEvent event) {
+    public static void init() {
         var stats = ENGINE.getStatistics();
         LOGGER.info("""
             Bolt Optimization Summary:

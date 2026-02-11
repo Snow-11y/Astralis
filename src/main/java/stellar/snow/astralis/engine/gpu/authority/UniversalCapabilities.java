@@ -1,4 +1,4 @@
-﻿﻿﻿﻿package stellar.snow.astralis.engine.gpu.authority;
+﻿﻿﻿package stellar.snow.astralis.engine.gpu.authority;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -16,6 +16,8 @@ import java.util.regex.Pattern;
  * - GLSL 1.10 - 4.60
  * - GLSL ES 1.00 - 3.20
  * - Metal 1.00 - 3.20
+ *  - DirectX 9 - 12.2
+ * - HLSL 1.0 - 6.8
  * - SPIR-V 1.0 - 1.6
  * - Vulkan 1.0 - 1.4
  * 
@@ -48,7 +50,10 @@ public class UniversalCapabilities {
             VULKAN,         // Force Vulkan
             METAL,          // Force Metal (macOS/iOS)
             OPENGL_COMPAT,  // OpenGL Compatibility Profile
-            OPENGL_CORE     // OpenGL Core Profile
+            OPENGL_CORE,    // OpenGL Core Profile
+            DIRECTX,        // Force DirectX (Windows)
+            DIRECTX11,      // Force Direct3D 11
+            DIRECTX12       // Force Direct3D 12
         }
         
         // Rendering tier preferences
@@ -103,6 +108,11 @@ public class UniversalCapabilities {
         public int minMetalMinor = 0;
         public int maxMetalMajor = 3;
         public int maxMetalMinor = 2;
+
+        public int minDirectXMajor = 11;
+        public int minDirectXMinor = 0;
+        public int maxDirectXMajor = 12;
+        public int maxDirectXMinor = 2;
 
         // Feature toggles
         public FeatureLevel useVBO = FeatureLevel.AUTO;
@@ -190,6 +200,11 @@ public class UniversalCapabilities {
             minMetalMinor = getInt(properties, "minMetalMinor", minMetalMinor);
             maxMetalMajor = getInt(properties, "maxMetalMajor", maxMetalMajor);
             maxMetalMinor = getInt(properties, "maxMetalMinor", maxMetalMinor);
+            
+            minDirectXMajor = getInt(properties, "minDirectXMajor", minDirectXMajor);
+            minDirectXMinor = getInt(properties, "minDirectXMinor", minDirectXMinor);
+            maxDirectXMajor = getInt(properties, "maxDirectXMajor", maxDirectXMajor);
+            maxDirectXMinor = getInt(properties, "maxDirectXMinor", maxDirectXMinor);
             
             // Feature levels
             useVBO = getFeatureLevel(properties, "useVBO", useVBO);
@@ -521,19 +536,22 @@ public class UniversalCapabilities {
     //===========================================================================================================
     
     public static final class GLES {
-        // All OpenGL ES versions
+        // All OpenGL ES versions (1.0 - 3.2 ONLY - no 4.x exists!)
         public static boolean ES10 = false;  // 2003 (OpenGL ES 1.0)
         public static boolean ES11 = false;  // 2004 (OpenGL ES 1.1)
         public static boolean ES20 = false;  // 2007 (OpenGL ES 2.0)
         public static boolean ES30 = false;  // 2012 (OpenGL ES 3.0)
         public static boolean ES31 = false;  // 2014 (OpenGL ES 3.1)
-        public static boolean ES32 = false;  // 2015 (OpenGL ES 3.2)
+        public static boolean ES32 = false;  // 2015 (OpenGL ES 3.2) - LATEST VERSION
         
         // Context info
         public static boolean isGLESContext = false;
+        public static boolean isEmulatedGLES = false;  // True if using ANGLE or similar
         public static int majorVersion = 0;
         public static int minorVersion = 0;
         public static String versionString = "";
+        public static String vendorString = "";
+        public static String rendererString = "";
         
         // Extension set
         public static final Set<String> extensions = new HashSet<>();
@@ -586,11 +604,11 @@ public class UniversalCapabilities {
         public static boolean GLSL_450 = false;  // GL 4.5 - #version 450
         public static boolean GLSL_460 = false;  // GL 4.6 - #version 460
         
-        // ES GLSL versions
+        // ES GLSL versions (ONLY up to 3.20 - no 4.x exists!)
         public static boolean GLSL_ES_100 = false;  // GLES 2.0 - #version 100 es
         public static boolean GLSL_ES_300 = false;  // GLES 3.0 - #version 300 es
         public static boolean GLSL_ES_310 = false;  // GLES 3.1 - #version 310 es
-        public static boolean GLSL_ES_320 = false;  // GLES 3.2 - #version 320 es
+        public static boolean GLSL_ES_320 = false;  // GLES 3.2 - #version 320 es - LATEST
         
         // Version info
         public static int majorVersion = 1;
@@ -1302,7 +1320,72 @@ public class UniversalCapabilities {
         public static boolean hasVideoDecodeAV1 = false;
         public static boolean hasVideoEncodeH264 = false;
         public static boolean hasVideoEncodeH265 = false;
-        
+
+        // ── External Memory (VK_KHR_external_memory / Win32 / POSIX fd) ────────────
+        public static boolean hasExternalMemory = false;           // VK_KHR_external_memory
+        public static boolean hasExternalMemoryWin32 = false;     // VK_KHR_external_memory_win32
+        public static boolean hasExternalMemoryFd = false;        // VK_KHR_external_memory_fd
+        public static boolean hasExternalSemaphoreWin32 = false;  // VK_KHR_external_semaphore_win32
+        public static boolean hasExternalSemaphoreFd = false;     // VK_KHR_external_semaphore_fd
+        public static boolean hasExternalFenceWin32 = false;      // VK_KHR_external_fence_win32
+        public static boolean hasExternalFenceFd = false;         // VK_KHR_external_fence_fd
+
+        // ── Variable Rate Shading ────────────────────────────────────────────────────
+        public static boolean hasFragmentShadingRateAttachment = false; // per-draw shading rate image
+        public static boolean hasFragmentShadingRatePrimitive = false;  // per-primitive rate in VS/GS
+        public static int     shadingRateMinTexelSize = 0;        // e.g. 8 (8×8 tile minimum)
+        public static int     shadingRateMaxTexelSize = 0;        // e.g. 64
+        public static boolean hasShadingRateImage = false;        // tile-based VRS image (NV ext)
+
+        // ── Mesh / Task Shaders (EXT_mesh_shader) ───────────────────────────────────
+        public static boolean hasMeshShaderEXT = false;           // confirmed EXT_mesh_shader
+        public static boolean hasTaskShaderEXT = false;           // task stage available
+        public static int     maxMeshWorkGroupInvocations = 0;    // typically 128
+        public static int     maxTaskWorkGroupInvocations = 0;    // typically 128
+        public static int[]   maxMeshWorkGroupSize = new int[3];  // XYZ limits
+        public static int[]   maxTaskWorkGroupSize = new int[3];
+        public static int     maxMeshOutputVertices = 0;          // e.g. 256
+        public static int     maxMeshOutputPrimitives = 0;        // e.g. 256
+        public static int     maxMeshSharedMemorySize = 0;        // bytes
+
+        // ── Ray Tracing (KHR) ────────────────────────────────────────────────────────
+        public static boolean hasRayTracingPositionFetch = false; // VK_KHR_ray_tracing_position_fetch
+        public static boolean hasRayTracingMaintenance1 = false;  // VK_KHR_ray_tracing_maintenance1
+        public static boolean hasRayTracingValidation = false;    // VK_NV_ray_tracing_validation
+        public static long    scratchBufferAlignment = 0;         // min scratch buffer alignment
+
+        // ── Async Compute / Transfer ─────────────────────────────────────────────────
+        public static boolean hasDedicatedTransferQueue = false;  // queue family: TRANSFER-only
+        public static boolean hasAsyncComputeQueue = false;       // queue family: COMPUTE-only
+        public static int     transferQueueFamilyIndex = -1;
+        public static int     computeQueueFamilyIndex = -1;
+        public static int     graphicsQueueFamilyIndex = -1;
+
+        // ── Texture Pipeline (KTX2 / format support) ────────────────────────────────
+        public static boolean hasKTX2Support = false;             // runtime KTX2 conversion active
+        public static boolean hasBC7Compression = false;          // VK_FORMAT_BC7_UNORM_BLOCK
+        public static boolean hasBC6HCompression = false;         // VK_FORMAT_BC6H_UFLOAT_BLOCK (HDR)
+        public static boolean hasASTC_LDRCompression = false;     // VK_FORMAT_ASTC_4x4_UNORM_BLOCK
+        public static boolean hasETC2Compression = false;         // VK_FORMAT_ETC2_R8G8B8_UNORM_BLOCK
+        public static boolean hasHostImageCopy = false;           // VK_EXT_host_image_copy (VK 1.4)
+        public static boolean hasMipmapGenCompute = false;        // compute-shader mipmap generation
+
+        // ── Host Image Copy / Zero-Copy Upload (VK 1.4) ─────────────────────────────
+        public static boolean hasHostImageCopyOptimal = false;    // OPTIMAL layout host copy
+
+        // ── Pipeline Library / Fast Compile ─────────────────────────────────────────
+        public static boolean hasPipelineLibrary = false;         // VK_KHR_pipeline_library
+        public static boolean hasGraphicsPipelineLibrary = false; // VK_EXT_graphics_pipeline_library
+        public static boolean hasMaintenance5 = false;            // VK_KHR_maintenance5
+        public static boolean hasMaintenance6 = false;            // VK_KHR_maintenance6 (VK 1.4)
+
+        // ── Push Descriptors (zero-alloc binding) ────────────────────────────────────
+        public static boolean hasPushDescriptors = false;         // VK_KHR_push_descriptor
+
+        // ── Cooperative Matrix / DLSS / XeSS hints ──────────────────────────────────
+        public static boolean hasCooperativeMatrix = false;       // VK_KHR_cooperative_matrix
+        public static boolean hasCooperativeMatrixNV = false;     // NV legacy variant
+
         // Memory properties
         public static long deviceLocalMemoryBytes = 0;
         public static long hostVisibleMemoryBytes = 0;
@@ -1377,7 +1460,746 @@ public class UniversalCapabilities {
         public static boolean hasDeviceExtension(String name) {
             return deviceExtensions.contains(name);
         }
+
+        /**
+         * Update Vulkan capability flags from a live VulkanBackend after initialization.
+         * Called by InitializationManager.updateUniversalCapabilitiesFromVulkan().
+         *
+         * @param major          Vulkan API major version
+         * @param minor          Vulkan API minor version (0–4)
+         * @param patch          Vulkan API patch
+         * @param device         Physical device name string
+         * @param vendor         PCI vendor ID
+         * @param devID          PCI device ID
+         * @param deviceLocalMem Device-local memory bytes
+         * @param hostVisibleMem Host-visible memory bytes
+         * @param extSet         Full set of enabled device extension name strings
+         * @param featureFlags   Packed boolean array – layout defined in InitializationManager
+         */
+        public static void updateFromVulkanBackend(
+                int major, int minor, int patch,
+                String device, int vendor, int devID,
+                long deviceLocalMem, long hostVisibleMem,
+                java.util.Set<String> extSet,
+                boolean[] featureFlags
+        ) {
+            isAvailable  = true;
+            isLoaded     = true;
+            majorVersion = major;
+            minorVersion = minor;
+            patchVersion = patch;
+            apiVersion   = (major << 22) | (minor << 12) | patch;
+            versionString = "Vulkan " + major + "." + minor + "." + patch;
+
+            deviceName             = device;
+            vendorID               = vendor;
+            deviceID               = devID;
+            deviceLocalMemoryBytes = deviceLocalMem;
+            hostVisibleMemoryBytes = hostVisibleMem;
+
+            // ── Version flags ────────────────────────────────────────────────────────────
+            VK10 = major >= 1;
+            VK11 = (major == 1 && minor >= 1) || major > 1;
+            VK12 = (major == 1 && minor >= 2) || major > 1;
+            VK13 = (major == 1 && minor >= 3) || major > 1;
+            VK14 = (major == 1 && minor >= 4) || major > 1;
+
+            // ── Extension presence ────────────────────────────────────────────────────────
+            if (extSet != null) {
+                deviceExtensions.addAll(extSet);
+
+                hasExternalMemory           = extSet.contains("VK_KHR_external_memory");
+                hasExternalMemoryWin32      = extSet.contains("VK_KHR_external_memory_win32");
+                hasExternalMemoryFd         = extSet.contains("VK_KHR_external_memory_fd");
+                hasExternalSemaphoreWin32   = extSet.contains("VK_KHR_external_semaphore_win32");
+                hasExternalSemaphoreFd      = extSet.contains("VK_KHR_external_semaphore_fd");
+                hasExternalFenceWin32       = extSet.contains("VK_KHR_external_fence_win32");
+                hasExternalFenceFd          = extSet.contains("VK_KHR_external_fence_fd");
+
+                hasFragmentShadingRate          = extSet.contains("VK_KHR_fragment_shading_rate");
+                hasFragmentShadingRateAttachment = extSet.contains("VK_KHR_fragment_shading_rate");
+                hasShadingRateImage             = extSet.contains("VK_NV_shading_rate_image");
+
+                hasMeshShader    = extSet.contains("VK_EXT_mesh_shader") ||
+                                   extSet.contains("VK_NV_mesh_shader");
+                hasMeshShaderEXT = extSet.contains("VK_EXT_mesh_shader");
+                hasTaskShaderEXT = hasMeshShaderEXT; // task stage is bundled with EXT
+
+                hasRayTracingPipeline       = extSet.contains("VK_KHR_ray_tracing_pipeline");
+                hasRayQuery                 = extSet.contains("VK_KHR_ray_query");
+                hasAccelerationStructure    = extSet.contains("VK_KHR_acceleration_structure");
+                hasRayTracingPositionFetch  = extSet.contains("VK_KHR_ray_tracing_position_fetch");
+                hasRayTracingMaintenance1   = extSet.contains("VK_KHR_ray_tracing_maintenance1");
+                hasRayTracingValidation     = extSet.contains("VK_NV_ray_tracing_validation");
+
+                hasPushDescriptors         = extSet.contains("VK_KHR_push_descriptor");
+                hasPipelineLibrary         = extSet.contains("VK_KHR_pipeline_library");
+                hasGraphicsPipelineLibrary = extSet.contains("VK_EXT_graphics_pipeline_library");
+                hasMaintenance5            = extSet.contains("VK_KHR_maintenance5");
+                hasMaintenance6            = extSet.contains("VK_KHR_maintenance6");
+                hasHostImageCopy           = extSet.contains("VK_EXT_host_image_copy");
+                hasHostImageCopyOptimal    = hasHostImageCopy;
+                hasCooperativeMatrix       = extSet.contains("VK_KHR_cooperative_matrix");
+                hasCooperativeMatrixNV     = extSet.contains("VK_NV_cooperative_matrix");
+            }
+
+            // ── Core-version promotions ──────────────────────────────────────────────────
+            if (VK12) {
+                hasTimelineSemaphore   = true;
+                hasBufferDeviceAddress = true;
+                hasDrawIndirectCount   = true;
+                hasDescriptorIndexing  = true;
+            }
+            if (VK13) {
+                hasSynchronization2    = true;
+                hasDynamicRendering    = true;
+                hasInlineUniformBlock  = true;
+                hasSubgroupSizeControl = true;
+            }
+            if (VK14) {
+                hasMaintenance5  = true;
+                hasPushDescriptors = true;
+                hasHostImageCopy   = true;
+            }
+
+            // ── featureFlags packed array (filled by InitializationManager) ─────────────
+            // Index layout:
+            //  [0]  hasMipmapGenCompute            [1]  hasKTX2Support
+            //  [2]  hasBC7Compression               [3]  hasBC6HCompression
+            //  [4]  hasASTC_LDRCompression           [5]  hasETC2Compression
+            //  [6]  hasDedicatedTransferQueue        [7]  hasAsyncComputeQueue
+            //  [8]  hasFragmentShadingRatePrimitive  [9]  hasShadingRateImage (NV)
+            //  [10-15] reserved
+            if (featureFlags != null && featureFlags.length >= 10) {
+                hasMipmapGenCompute             = featureFlags[0];
+                hasKTX2Support                  = featureFlags[1];
+                hasBC7Compression               = featureFlags[2];
+                hasBC6HCompression              = featureFlags[3];
+                hasASTC_LDRCompression          = featureFlags[4];
+                hasETC2Compression              = featureFlags[5];
+                hasDedicatedTransferQueue       = featureFlags[6];
+                hasAsyncComputeQueue            = featureFlags[7];
+                hasFragmentShadingRatePrimitive = featureFlags[8];
+                // [9] left for caller to set via hasShadingRateImage = featureFlags[9]
+            }
+        }
+
+        /**
+         * Recommend a render tier based on detected Vulkan capabilities.
+         * Mirrors the scoring used by GPUBackendSelector.
+         */
+        public static Config.RenderTier getRecommendedTier() {
+            if (!isAvailable) return Config.RenderTier.POTATO;
+
+            // Ultra: VK 1.3+, mesh shaders, ray tracing, VRS, async queues
+            if (VK13 && hasMeshShaderEXT && hasRayTracingPipeline
+                    && hasFragmentShadingRate && hasDedicatedTransferQueue) {
+                return Config.RenderTier.ULTRA;
+            }
+            // High: VK 1.2, bindless, BDA
+            if (VK12 && hasDescriptorIndexing && hasBufferDeviceAddress) {
+                return Config.RenderTier.HIGH;
+            }
+            // Medium: VK 1.1 + multi-draw
+            if (VK11 && hasMultiDrawIndirect) {
+                return Config.RenderTier.MEDIUM;
+            }
+            // Low: any Vulkan 1.0
+            if (VK10) return Config.RenderTier.LOW;
+
+            return Config.RenderTier.POTATO;
+        }
+
+
+    //===========================================================================================================
+    // DIRECTX / DIRECT3D - Windows Graphics API
+    //===========================================================================================================
+    
+    //===========================================================================================================
+    // DIRECTX CAPABILITIES (9.0c - 12.2 Support)
+    //===========================================================================================================
+    
+    public static final class DirectX {
+        // DirectX Availability
+        public static boolean isAvailable = false;
+        public static boolean isInitialized = false;
         
+        // DirectX Version Support (detected at runtime)
+        public static boolean supportsDX9 = false;
+        public static boolean supportsDX9Ex = false;
+        public static boolean supportsDX10 = false;
+        public static boolean supportsDX10_1 = false;
+        public static boolean supportsDX11 = false;
+        public static boolean supportsDX11_1 = false;
+        public static boolean supportsDX11_2 = false;
+        public static boolean supportsDX11_3 = false;
+        public static boolean supportsDX11_4 = false;
+        public static boolean supportsDX12 = false;
+        public static boolean supportsDX12_1 = false;
+        public static boolean supportsDX12_2 = false;
+        
+        // Current Active Version
+        public static int majorVersion = 0;      // 9, 10, 11, or 12
+        public static int minorVersion = 0;      // 0, 1, 2, etc.
+        public static int featureLevel = 0;      // D3D_FEATURE_LEVEL as int
+        public static String versionString = "";
+        
+        // Device Information
+        public static String deviceName = "";
+        public static String driverDescription = "";
+        public static int vendorID = 0;          // PCI vendor ID
+        public static int deviceID = 0;          // PCI device ID
+        public static long dedicatedVideoMemory = 0;
+        public static long dedicatedSystemMemory = 0;
+        public static long sharedSystemMemory = 0;
+        
+        // GPU Vendor Detection
+        public static boolean isNVIDIA = false;
+        public static boolean isAMD = false;
+        public static boolean isIntel = false;
+        public static boolean isQualcomm = false;
+        public static boolean isARM = false;
+        public static boolean isMicrosoft = false;  // WARP / Basic Render Driver
+        
+        // DirectX 9 Capabilities
+        public static boolean dx9_hardwareVertexProcessing = false;
+        public static boolean dx9_hardwarePixelProcessing = false;
+        public static boolean dx9_vsync = false;
+        public static boolean dx9_multithreaded = false;
+        public static int dx9_maxSimultaneousTextures = 0;
+        public static int dx9_maxTextureBlendStages = 0;
+        public static int dx9_maxAnisotropy = 0;
+        
+        // DirectX 10/11 Capabilities
+        public static boolean dx11_deferredContext = false;
+        public static boolean dx11_multithreading = false;
+        public static boolean dx11_commandLists = false;
+        public static boolean dx11_computeShaders = false;
+        public static boolean dx11_hullShaders = false;
+        public static boolean dx11_domainShaders = false;
+        public static boolean dx11_geometryShaders = false;
+        
+        // DirectX 12 Capabilities
+        public static boolean dx12_explicit = false;
+        public static boolean dx12_commandLists = false;
+        public static boolean dx12_bundles = false;
+        public static boolean dx12_rootSignature = false;
+        public static boolean dx12_descriptorHeaps = false;
+        public static boolean dx12_resourceBarriers = false;
+        public static boolean dx12_tiledResources = false;
+        public static int dx12_tiledResourcesTier = 0;
+        public static boolean dx12_conservativeRasterization = false;
+        public static int dx12_conservativeRasterizationTier = 0;
+        public static boolean dx12_rovs = false;  // Rasterizer Ordered Views
+        public static boolean dx12_typedUAVLoads = false;
+        
+        // DirectX 12 Advanced Features (Ultimate)
+        public static boolean dx12_rayTracing = false;
+        public static boolean dx12_rayTracingTier1_0 = false;
+        public static boolean dx12_rayTracingTier1_1 = false;
+        public static boolean dx12_meshShaders = false;
+        public static boolean dx12_variableRateShading = false;
+        public static int dx12_variableRateShadingTier = 0;
+        public static boolean dx12_samplerFeedback = false;
+        public static int dx12_samplerFeedbackTier = 0;
+        public static boolean dx12_directStorage = false;
+        public static boolean dx12_workGraphs = false;
+        
+        // Resource Binding
+        public static boolean bindlessResources = false;
+        public static int resourceBindingTier = 0;  // 1, 2, or 3
+        public static int maxDescriptorHeapSize = 0;
+        public static int maxRootSignatureDWORDs = 64;
+        
+        // Shader Model Support
+        public static int maxShaderModel = 0;  // e.g., 50 for 5.0, 60 for 6.0, 65 for 6.5, etc.
+        public static boolean shaderModel_5_0 = false;
+        public static boolean shaderModel_5_1 = false;
+        public static boolean shaderModel_6_0 = false;
+        public static boolean shaderModel_6_1 = false;
+        public static boolean shaderModel_6_2 = false;
+        public static boolean shaderModel_6_3 = false;
+        public static boolean shaderModel_6_4 = false;
+        public static boolean shaderModel_6_5 = false;
+        public static boolean shaderModel_6_6 = false;
+        public static boolean shaderModel_6_7 = false;
+        
+        // WARP Software Rasterizer
+        public static boolean isWARP = false;
+        public static boolean warpAvailable = false;
+        
+        /**
+         * Initialize DirectX capabilities detection
+         */
+        public static void initialize() {
+            if (isInitialized) return;
+            
+            try {
+                // This will be called by InitializationManager when DirectXManager is initialized
+                isInitialized = true;
+            } catch (Exception e) {
+                isAvailable = false;
+                isInitialized = false;
+            }
+        }
+        
+        /**
+         * Update capabilities from DirectXManager
+         * Called by InitializationManager after DirectXManager detects hardware
+         */
+        public static void updateFromDirectXManager(
+            int major, int minor, int featureLvl,
+            String device, int vendor, int devID,
+            long vram, long sysRam, long sharedRam,
+            boolean[] versionSupport, boolean[] features
+        ) {
+            isAvailable = true;
+            majorVersion = major;
+            minorVersion = minor;
+            featureLevel = featureLvl;
+            versionString = String.format("DirectX %d.%d", major, minor);
+            
+            deviceName = device;
+            vendorID = vendor;
+            deviceID = devID;
+            dedicatedVideoMemory = vram;
+            dedicatedSystemMemory = sysRam;
+            sharedSystemMemory = sharedRam;
+            
+            // Detect vendor
+            isNVIDIA = (vendorID == 0x10DE);
+            isAMD = (vendorID == 0x1002);
+            isIntel = (vendorID == 0x8086);
+            isMicrosoft = (vendorID == 0x1414);
+            isQualcomm = (vendorID == 0x5143);
+            isARM = (vendorID == 0x13B5);
+            
+            // Update version support flags from array
+            if (versionSupport != null && versionSupport.length >= 12) {
+                supportsDX9 = versionSupport[0];
+                supportsDX9Ex = versionSupport[1];
+                supportsDX10 = versionSupport[2];
+                supportsDX10_1 = versionSupport[3];
+                supportsDX11 = versionSupport[4];
+                supportsDX11_1 = versionSupport[5];
+                supportsDX11_2 = versionSupport[6];
+                supportsDX11_3 = versionSupport[7];
+                supportsDX11_4 = versionSupport[8];
+                supportsDX12 = versionSupport[9];
+                supportsDX12_1 = versionSupport[10];
+                supportsDX12_2 = versionSupport[11];
+            }
+            
+            // Update feature flags from array
+            if (features != null && features.length >= 20) {
+                dx12_rayTracing = features[0];
+                dx12_meshShaders = features[1];
+                dx12_variableRateShading = features[2];
+                dx12_samplerFeedback = features[3];
+                dx12_tiledResources = features[4];
+                dx12_conservativeRasterization = features[5];
+                dx12_rovs = features[6];
+                dx12_typedUAVLoads = features[7];
+                bindlessResources = features[8];
+                dx11_computeShaders = features[9];
+                dx11_hullShaders = features[10];
+                dx11_domainShaders = features[11];
+                dx11_geometryShaders = features[12];
+                dx12_commandLists = features[13];
+                dx12_bundles = features[14];
+                dx12_descriptorHeaps = features[15];
+                dx12_resourceBarriers = features[16];
+                isWARP = features[17];
+                dx12_directStorage = features[18];
+                dx12_workGraphs = features[19];
+            }
+        }
+        
+        /**
+         * Check if DirectX is supported
+         */
+        public static boolean isSupported() {
+            return isAvailable && (supportsDX9 || supportsDX10 || supportsDX11 || supportsDX12);
+        }
+        
+        /**
+         * Get highest supported DirectX version
+         */
+        public static int getHighestVersion() {
+            if (supportsDX12_2) return 122;
+            if (supportsDX12_1) return 121;
+            if (supportsDX12) return 120;
+            if (supportsDX11_4) return 114;
+            if (supportsDX11_3) return 113;
+            if (supportsDX11_2) return 112;
+            if (supportsDX11_1) return 111;
+            if (supportsDX11) return 110;
+            if (supportsDX10_1) return 101;
+            if (supportsDX10) return 100;
+            if (supportsDX9Ex) return 91;
+            if (supportsDX9) return 90;
+            return 0;
+        }
+        
+        /**
+         * Get recommended render tier based on DirectX capabilities
+         */
+        public static Config.RenderTier getRecommendedTier() {
+            if (!isSupported()) return Config.RenderTier.LOW;
+            
+            // Ultra: DX12 Ultimate features
+            if (supportsDX12_2 && dx12_rayTracing && dx12_meshShaders && 
+                dx12_variableRateShading && dx12_samplerFeedback) {
+                return Config.RenderTier.ULTRA;
+            }
+            
+            // High: DX12 with some advanced features
+            if (supportsDX12 && (dx12_rayTracing || dx12_meshShaders)) {
+                return Config.RenderTier.HIGH;
+            }
+            
+            // Medium: DX11 or basic DX12
+            if (supportsDX11 || supportsDX12) {
+                return Config.RenderTier.MEDIUM;
+            }
+            
+            // Low: DX10 or DX9
+            if (supportsDX10 || supportsDX9) {
+                return Config.RenderTier.LOW;
+            }
+            
+            return Config.RenderTier.POTATO;
+        }
+        
+        /**
+         * Check if a specific feature level is supported
+         */
+        public static boolean isFeatureLevelSupported(int level) {
+            return featureLevel >= level;
+        }
+        
+        /**
+         * Get version as integer (major * 10 + minor)
+         */
+        public static int getVersionInt() {
+            return majorVersion * 10 + minorVersion;
+        }
+        
+        /**
+         * Get memory info string
+         */
+        public static String getMemoryInfo() {
+            long vramMB = dedicatedVideoMemory / 1024 / 1024;
+            long sysRamMB = dedicatedSystemMemory / 1024 / 1024;
+            long sharedMB = sharedSystemMemory / 1024 / 1024;
+            return String.format("VRAM: %d MB, System: %d MB, Shared: %d MB", 
+                vramMB, sysRamMB, sharedMB);
+        }
+    }
+    
+    /**
+     * Check if DirectX is supported (global convenience method)
+     */
+    public static boolean isDirectXSupported() {
+        return DirectX.isSupported();
+    }
+    
+    /**
+     * Initialize DirectX capabilities (called by InitializationManager)
+     */
+    public static void initializeDirectX() {
+        DirectX.initialize();
+    }
+    
+    //===========================================================================================================
+    // HLSL CAPABILITIES (High-Level Shader Language for DirectX)
+    //===========================================================================================================
+    
+    public static final class HLSL {
+        // HLSL Availability
+        public static boolean isAvailable = false;
+        public static boolean isInitialized = false;
+        public static boolean isDXCAvailable = false;         // Modern DXC compiler
+        public static boolean isD3DCompilerAvailable = false; // Legacy D3DCompiler
+        
+        // Active Compiler
+        public static String activeCompiler = "";  // "DXC" or "D3DCompiler"
+        public static String compilerVersion = "";
+        
+        // Shader Model Support (detected from DirectX)
+        public static boolean sm2_0 = false;  // DX9
+        public static boolean sm3_0 = false;  // DX9
+        public static boolean sm4_0 = false;  // DX10
+        public static boolean sm4_1 = false;  // DX10.1
+        public static boolean sm5_0 = false;  // DX11
+        public static boolean sm5_1 = false;  // DX11.3
+        public static boolean sm6_0 = false;  // DX12
+        public static boolean sm6_1 = false;  // DX12
+        public static boolean sm6_2 = false;  // DX12
+        public static boolean sm6_3 = false;  // DX12
+        public static boolean sm6_4 = false;  // DX12
+        public static boolean sm6_5 = false;  // DX12
+        public static boolean sm6_6 = false;  // DX12
+        public static boolean sm6_7 = false;  // DX12
+        public static boolean sm6_8 = false;  // DX12
+        
+        // Current Active Shader Model
+        public static int activeShaderModel = 50;  // Default: 5.0
+        public static String shaderModelString = "5_0";
+        
+        // Advanced HLSL Features (SM 6.0+)
+        public static boolean waveIntrinsics = false;          // SM 6.0+
+        public static boolean float16Support = false;          // SM 6.2+
+        public static boolean int16Support = false;            // SM 6.2+
+        public static boolean int64Support = false;            // SM 6.0+
+        public static boolean viewInstancing = false;          // SM 6.1+
+        public static boolean barycentrics = false;            // SM 6.1+
+        public static boolean raytracingShaders = false;       // SM 6.3+ (DXR)
+        public static boolean meshShaders = false;             // SM 6.5+
+        public static boolean amplificationShaders = false;    // SM 6.5+
+        public static boolean workGraphs = false;              // SM 6.8+
+        public static boolean samplerFeedback = false;         // SM 6.5+
+        public static boolean variableRateShading = false;     // SM 6.4+
+        public static boolean unboundedArrays = false;         // SM 6.6+
+        
+        // Compilation Capabilities
+        public static boolean supportsRootSignature = false;   // DX12
+        public static boolean supportsRootSignature1_1 = false;
+        public static boolean supportsBytecodeCaching = true;
+        public static boolean supportsShaderReflection = true;
+        public static boolean supportsDebugSymbols = true;
+        
+        // Translation Capabilities
+        public static boolean glslToHLSLTranslation = false;   // Can translate GLSL→HLSL
+        public static boolean spirvBackend = false;             // Can compile HLSL→SPIR-V
+        public static boolean spirvOptimizer = false;           // SPIR-V optimization available
+        
+        // Optimization Support
+        public static int maxOptimizationLevel = 3;  // 0-3
+        public static boolean supportsFlowControl = true;
+        public static boolean supportsBranchFlattening = true;
+        public static boolean supportsIEEEStrictness = true;
+        
+        /**
+         * Initialize HLSL capabilities based on DirectX detection
+         */
+        public static void initialize() {
+            if (isInitialized) return;
+            
+            try {
+                // Detect compilers
+                detectCompilers();
+                
+                // Detect shader model support from DirectX
+                if (DirectX.isAvailable) {
+                    detectShaderModelSupport();
+                    detectAdvancedFeatures();
+                }
+                
+                isAvailable = isDXCAvailable || isD3DCompilerAvailable;
+                isInitialized = true;
+                
+            } catch (Exception e) {
+                isAvailable = false;
+                isInitialized = false;
+            }
+        }
+        
+        /**
+         * Detect available HLSL compilers
+         */
+        private static void detectCompilers() {
+            // This will be implemented by checking for DXC and D3DCompiler DLLs
+            // For now, assume availability based on DirectX
+            if (DirectX.supportsDX12) {
+                isDXCAvailable = true;
+                activeCompiler = "DXC";
+                compilerVersion = "1.7+";
+            }
+            
+            if (DirectX.supportsDX11 || DirectX.supportsDX10 || DirectX.supportsDX9) {
+                isD3DCompilerAvailable = true;
+                if (!isDXCAvailable) {
+                    activeCompiler = "D3DCompiler";
+                    compilerVersion = "47";
+                }
+            }
+        }
+        
+        /**
+         * Detect shader model support from DirectX version
+         */
+        private static void detectShaderModelSupport() {
+            // Shader Model detection based on DirectX version
+            if (DirectX.supportsDX9) {
+                sm2_0 = true;
+                sm3_0 = true;
+            }
+            
+            if (DirectX.supportsDX10) {
+                sm4_0 = true;
+            }
+            
+            if (DirectX.supportsDX10_1) {
+                sm4_1 = true;
+            }
+            
+            if (DirectX.supportsDX11) {
+                sm5_0 = true;
+            }
+            
+            if (DirectX.supportsDX11_3) {
+                sm5_1 = true;
+            }
+            
+            if (DirectX.supportsDX12) {
+                sm6_0 = true;
+                sm6_1 = true;
+                sm6_2 = true;
+                sm6_3 = true;
+                sm6_4 = true;
+            }
+            
+            if (DirectX.supportsDX12_1) {
+                sm6_5 = true;
+                sm6_6 = true;
+            }
+            
+            if (DirectX.supportsDX12_2) {
+                sm6_7 = true;
+                sm6_8 = true;
+            }
+            
+            // Set active shader model to highest supported
+            if (sm6_8) { activeShaderModel = 68; shaderModelString = "6_8"; }
+            else if (sm6_7) { activeShaderModel = 67; shaderModelString = "6_7"; }
+            else if (sm6_6) { activeShaderModel = 66; shaderModelString = "6_6"; }
+            else if (sm6_5) { activeShaderModel = 65; shaderModelString = "6_5"; }
+            else if (sm6_4) { activeShaderModel = 64; shaderModelString = "6_4"; }
+            else if (sm6_3) { activeShaderModel = 63; shaderModelString = "6_3"; }
+            else if (sm6_2) { activeShaderModel = 62; shaderModelString = "6_2"; }
+            else if (sm6_1) { activeShaderModel = 61; shaderModelString = "6_1"; }
+            else if (sm6_0) { activeShaderModel = 60; shaderModelString = "6_0"; }
+            else if (sm5_1) { activeShaderModel = 51; shaderModelString = "5_1"; }
+            else if (sm5_0) { activeShaderModel = 50; shaderModelString = "5_0"; }
+            else if (sm4_1) { activeShaderModel = 41; shaderModelString = "4_1"; }
+            else if (sm4_0) { activeShaderModel = 40; shaderModelString = "4_0"; }
+            else if (sm3_0) { activeShaderModel = 30; shaderModelString = "3_0"; }
+            else if (sm2_0) { activeShaderModel = 20; shaderModelString = "2_0"; }
+        }
+        
+        /**
+         * Detect advanced HLSL features from DirectX capabilities
+         */
+        private static void detectAdvancedFeatures() {
+            // Wave intrinsics (SM 6.0+)
+            waveIntrinsics = sm6_0 && DirectX.supportsDX12;
+            
+            // 16-bit types (SM 6.2+)
+            float16Support = sm6_2;
+            int16Support = sm6_2;
+            
+            // 64-bit integers (SM 6.0+)
+            int64Support = sm6_0;
+            
+            // View instancing (SM 6.1+)
+            viewInstancing = sm6_1;
+            
+            // Barycentrics (SM 6.1+)
+            barycentrics = sm6_1;
+            
+            // Ray tracing (SM 6.3+ and DXR support)
+            raytracingShaders = sm6_3 && DirectX.dx12_rayTracing;
+            
+            // Mesh shaders (SM 6.5+)
+            meshShaders = sm6_5 && DirectX.dx12_meshShaders;
+            amplificationShaders = meshShaders;
+            
+            // Work graphs (SM 6.8+)
+            workGraphs = sm6_8 && DirectX.dx12_workGraphs;
+            
+            // Sampler feedback (SM 6.5+)
+            samplerFeedback = sm6_5 && DirectX.dx12_samplerFeedback;
+            
+            // Variable rate shading (SM 6.4+)
+            variableRateShading = sm6_4 && DirectX.dx12_variableRateShading;
+            
+            // Unbounded arrays (SM 6.6+)
+            unboundedArrays = sm6_6 && DirectX.bindlessResources;
+            
+            // Root signatures (DX12)
+            supportsRootSignature = DirectX.supportsDX12;
+            supportsRootSignature1_1 = DirectX.supportsDX12_1;
+        }
+        
+        /**
+         * Check if HLSL is supported
+         */
+        public static boolean isSupported() {
+            return isAvailable && (isDXCAvailable || isD3DCompilerAvailable);
+        }
+        
+        /**
+         * Get highest supported shader model as integer
+         */
+        public static int getHighestShaderModel() {
+            return activeShaderModel;
+        }
+        
+        /**
+         * Get recommended shader model based on target DirectX version
+         */
+        public static String getRecommendedShaderModel() {
+            if (DirectX.supportsDX12_2) return "6_7";
+            if (DirectX.supportsDX12_1) return "6_5";
+            if (DirectX.supportsDX12) return "6_0";
+            if (DirectX.supportsDX11_3) return "5_1";
+            if (DirectX.supportsDX11) return "5_0";
+            if (DirectX.supportsDX10_1) return "4_1";
+            if (DirectX.supportsDX10) return "4_0";
+            if (DirectX.supportsDX9) return "3_0";
+            return "5_0"; // Safe default
+        }
+        
+        /**
+         * Check if a specific shader model is supported
+         */
+        public static boolean isShaderModelSupported(String sm) {
+            return switch (sm) {
+                case "2_0" -> sm2_0;
+                case "3_0" -> sm3_0;
+                case "4_0" -> sm4_0;
+                case "4_1" -> sm4_1;
+                case "5_0" -> sm5_0;
+                case "5_1" -> sm5_1;
+                case "6_0" -> sm6_0;
+                case "6_1" -> sm6_1;
+                case "6_2" -> sm6_2;
+                case "6_3" -> sm6_3;
+                case "6_4" -> sm6_4;
+                case "6_5" -> sm6_5;
+                case "6_6" -> sm6_6;
+                case "6_7" -> sm6_7;
+                case "6_8" -> sm6_8;
+                default -> false;
+            };
+        }
+    }
+    
+    /**
+     * Check if HLSL is supported (global convenience method)
+     */
+    public static boolean isHLSLSupported() {
+        return HLSL.isSupported();
+    }
+    
+    /**
+     * Initialize HLSL capabilities (called by InitializationManager)
+     */
+    public static void initializeHLSL() {
+        HLSL.initialize();
+    }
+    
         /**
          * Get device type as string
          */
@@ -1752,6 +2574,7 @@ public class UniversalCapabilities {
                 detectOpenGL();
                 detectVulkan();
                 detectMetal();
+                detectDirectX();
                 detectOpenGL_ES();
                 resolveFeatures();
                 initialized = true;
@@ -1995,6 +2818,17 @@ public class UniversalCapabilities {
             GLES.isGLESContext = true;
             Wrapper.isGLES = true;
             
+            // Capture vendor and renderer for emulation detection
+            try {
+                GLES.vendorString = org.lwjgl.opengl.GL11.glGetString(org.lwjgl.opengl.GL11.GL_VENDOR);
+                GLES.rendererString = org.lwjgl.opengl.GL11.glGetString(org.lwjgl.opengl.GL11.GL_RENDERER);
+                GLES.versionString = org.lwjgl.opengl.GL11.glGetString(org.lwjgl.opengl.GL11.GL_VERSION);
+            } catch (Exception e) {
+                GLES.vendorString = "";
+                GLES.rendererString = "";
+                GLES.versionString = GL.versionString;
+            }
+            
             Pattern p = Pattern.compile("opengl\\s*es\\s*(\\d+)\\.(\\d+)", Pattern.CASE_INSENSITIVE);
             Matcher m = p.matcher(GL.versionString);
             
@@ -2017,12 +2851,21 @@ public class UniversalCapabilities {
         GLES.ES31 = ver >= 31;
         GLES.ES32 = ver >= 32;
         
-        // GLSL ES versions
+        // Check if this is emulated GLES (ANGLE, Zink, etc.)
+        String renderer = GLES.rendererString.toLowerCase();
+        String vendor = GLES.vendorString.toLowerCase();
+        GLES.isEmulatedGLES = renderer.contains("angle") || 
+                              renderer.contains("zink") ||
+                              renderer.contains("mesa") ||
+                              vendor.contains("google");
+        
+        // GLSL ES versions (max is 3.20)
         GLSL.GLSL_ES_100 = GLES.ES20;
         GLSL.GLSL_ES_300 = GLES.ES30;
         GLSL.GLSL_ES_310 = GLES.ES31;
         GLSL.GLSL_ES_320 = GLES.ES32;
         
+        // Update GLSL ES version numbers
         if (GLES.ES32) {
             GLSL.esMajorVersion = 3;
             GLSL.esMinorVersion = 20;
@@ -2448,6 +3291,7 @@ public class UniversalCapabilities {
         synchronized (initLock) {
             if (metalInitialized) return;
             detectMetal();
+                detectDirectX();
             metalInitialized = true;
         }
     }
@@ -4515,3 +5359,55 @@ public class UniversalCapabilities {
         System.out.println(getCompactReport());
     }
 }
+
+    //===========================================================================================================
+    // DIRECTX DETECTION
+    //===========================================================================================================
+    
+    /**
+     * Detect DirectX capabilities (Windows only)
+     * 
+     * NOTE: This is a stub implementation. Full DirectX detection requires:
+     * - JNI/JNA bindings to D3D11/D3D12 APIs
+     * - DXGI adapter enumeration
+     * - Feature level detection
+     * - Shader model detection
+     * 
+     * For now, we mark DirectX as unavailable on non-Windows platforms
+     * and available but uninitialized on Windows.
+     */
+    private static void detectDirectX() {
+        try {
+            String osName = System.getProperty("os.name", "").toLowerCase();
+            
+            if (!osName.contains("windows")) {
+                // DirectX only available on Windows
+                DirectX.isAvailable = false;
+                return;
+            }
+            
+            // Windows detected - mark as potentially available
+            // TODO: Implement actual DirectX detection via JNI/JNA
+            // For now, assume D3D11 is available on Windows 7+
+            DirectX.isAvailable = true;
+            DirectX.D3D11 = true; // Conservative assumption
+            DirectX.majorVersion = 11;
+            DirectX.minorVersion = 0;
+            
+            // Check Windows version for D3D12 support (Windows 10+)
+            String osVersion = System.getProperty("os.version", "");
+            if (osVersion.startsWith("10.") || osVersion.startsWith("11.")) {
+                DirectX.D3D12 = true;
+                DirectX.majorVersion = 12;
+            }
+            
+            System.out.println("[UniversalCapabilities] DirectX stub detection complete");
+            System.out.println("  - Available: " + DirectX.isAvailable);
+            System.out.println("  - D3D11: " + DirectX.D3D11);
+            System.out.println("  - D3D12: " + DirectX.D3D12);
+            System.out.println("  - NOTE: This is a stub. Implement full detection for production use.");
+            
+        } catch (Exception e) {
+            System.err.println("[UniversalCapabilities] DirectX detection failed: " + e.getMessage());
+            DirectX.isAvailable = false;
+     

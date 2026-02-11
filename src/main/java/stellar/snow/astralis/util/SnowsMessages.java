@@ -1,8 +1,4 @@
-// SnowsMessages.java
-// Universal Minecraft Mod - Any Loader, Any Version
-// Place in your mod's source and adapt entry point for your loader
-
-package stellar.snow.astralis.soul;
+package stellar.snow.astralis.util;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -458,7 +454,7 @@ public class SnowsMessages {
         "seems CleanRoom Forked Forge + toxicity Built-in, glad i was separated",
         "MDR is SOO great!!~, Better than CleanRoom, junking a pathetic rewrite of Forge and calling it The future of 1.12.2 Modding, PATHETIC...document properly or be A TRUE loader instead of relying on daddy forge for your loader to work, loader needs a loader to work is a patch mod behavior, rather than a environment",
         "Rong(super)mario kicked me out CleanRoomMC's discord after a provocation~ *he is too easy*~, guys i've wanted to leave, they're bullies, they're toxic, incest, and other illegal behaviors, but didn't want to look like ive failed to ship my mod so ive left~! that's why Ive manipulated That idiot supermario by a simple provocative words and he kicked me out~, with a ego as big as his (his ass is bigger than his ego tho) easiest way to manipulate rong is by forcing him inba situation where he must wait till you finish your thing to "settle" things down, which triggers that idiot to kick me out so he escape that kind of situation, where the idiot isn't in control, HA~! glad i left that trash hole",
-        "the mod will be ported to fabric + neoforge for abandoning Forge and its pet CleanRoom~ heheh",
+        "the mod will be ported to fabric + neoforge for abandoning Forge and its pet CleanRoom",
         "The mod might be abandoned for a while, until i return from the rest AFTER the first successful build",
         "Professionalism is just corporate cosplay and I refuse to participate!",
         "Stoicism is just emotional constipation change my mind!",

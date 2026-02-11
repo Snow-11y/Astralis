@@ -52,7 +52,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
 import java.lang.foreign.*;
@@ -82,10 +81,6 @@ public final class Lumen {
     // Constants
     // ─────────────────────────────────────────────────────────────────────────────────────
     
-    public static final String MOD_ID = "lumen";
-    public static final String MOD_NAME = "Lumen";
-    public static final String VERSION = "1.0.0";
-    
     /** Maximum light level in Minecraft */
     public static final int MAX_LIGHT = 15;
     
@@ -99,7 +94,7 @@ public final class Lumen {
     public static final int DEFAULT_QUEUE_CAPACITY = 65536;
     
     /** Logger */
-    public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
+    public static final Logger LOGGER = LogManager.getLogger("Lumen");
     
     // ─────────────────────────────────────────────────────────────────────────────────────
     // Compatibility Flags (computed once at class load)

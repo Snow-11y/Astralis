@@ -89,8 +89,6 @@ import net.minecraft.world.storage.*;
 
 // Forge 1.12.2
 import net.minecraftforge.fml.common.*;
-import net.minecraftforge.fml.common.Mod.*;
-import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.registry.*;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -121,15 +119,6 @@ import org.objectweb.asm.tree.*;
 
 public final class LegacyFix {
     
-    // ════════════════════════════════════════════════════════════════════════════════
-    // ██ SECTION 3: CONSTANTS
-    // ════════════════════════════════════════════════════════════════════════════════
-    
-    public static final String MOD_ID = "legacyfix";
-    public static final String MOD_NAME = "LegacyFix";
-    public static final String VERSION = "1.0.0";
-    public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
-    
     private static final int OPTIMAL_WORKER_THREADS = 
         Math.max(4, Runtime.getRuntime().availableProcessors() - 2);
     
@@ -159,7 +148,7 @@ public final class LegacyFix {
     // ════════════════════════════════════════════════════════════════════════════════
     
     @EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public static void preInit() {
         if (!initialized.compareAndSet(false, true)) {
             LOGGER.warn("LegacyFix already initialized!");
             return;
@@ -185,7 +174,7 @@ public final class LegacyFix {
     }
     
     @EventHandler
-    public void init(FMLInitializationEvent event) {
+    public static void init() {
         MinecraftForge.EVENT_BUS.register(EventHandlers.INSTANCE);
         
         if (event.getSide().isClient()) {
@@ -194,7 +183,7 @@ public final class LegacyFix {
     }
     
     @EventHandler
-    public void postInit(FMLPostInitializationEvent event) {
+    public static void postInit() {
         RecipeOptimizer.optimizeAllRecipes();
         LOGGER.info("Post-initialization optimizations complete!");
     }

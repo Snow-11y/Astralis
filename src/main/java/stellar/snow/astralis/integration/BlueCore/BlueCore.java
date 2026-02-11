@@ -37,9 +37,6 @@ import java.util.regex.Pattern;
  */
 public final class BlueCore {
 
-    public static final String ID = "bluecore";
-    public static final String VERSION = "2.0.0-J25";
-    
     private static final Logger INTERNAL_LOGGER = LoggerFactory.getLogger("BlueCore");
     
     /** Primary logging interface - thread-safe, allocation-optimized */

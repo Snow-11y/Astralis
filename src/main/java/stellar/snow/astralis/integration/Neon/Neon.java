@@ -59,8 +59,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
@@ -97,12 +95,9 @@ import java.util.function.*;
 
 public final class Neon {
     
-    public static final String MOD_ID = "neon";
-    public static final String VERSION = "2.0.0";
     public static final Logger LOG = LogManager.getLogger("Neon");
     
-    @Mod.Instance(MOD_ID)
-    public static Neon INSTANCE;
+    private static Neon INSTANCE;
     
     // ════════════════════════════════════════════════════════════════════════
     // Core Engine Components

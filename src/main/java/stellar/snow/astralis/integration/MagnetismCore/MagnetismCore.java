@@ -25,11 +25,6 @@ package stellar.snow.astralis.integration.MagnetismCore;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,36 +41,29 @@ import java.util.function.Function;
 // ============================================================================
 
 public final class MagnetismCore {
-    public static final String MODID = "magnetismcore";
-    public static final String NAME = "MagnetismCore";
-    public static final String VERSION = "1.0.0-java25-ffm";
-    
-    private static final Logger LOGGER = LogManager.getLogger(NAME);
+    private static final Logger LOGGER = LogManager.getLogger("MagnetismCore");
     private static MemoryOptimizationEngine optimizationEngine;
     private static MagnetismConfiguration config;
     
-    @EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public static void preInit() {
         LOGGER.info("""
             ╔════════════════════════════════════════╗
-            ║  MagnetismCore v%s Loading...     ║
+            ║  MagnetismCore v1.0.0 Loading...       ║
             ║   Native Memory Optimization Mod       ║
             ║   Powered by Java 25 FFM API           ║
             ╚════════════════════════════════════════╝
-            """.formatted(VERSION));
+            """);
         
         config = MagnetismConfiguration.load();
         optimizationEngine = new MemoryOptimizationEngine(config);
     }
     
-    @EventHandler
-    public void init(FMLInitializationEvent event) {
+    public static void init() {
         LOGGER.info("Initializing MagnetismCore memory optimization...");
         optimizationEngine.initialize();
     }
     
-    @EventHandler
-    public void postInit(FMLPostInitializationEvent event) {
+    public static void postInit() {
         var stats = optimizationEngine.getStatistics();
         
         LOGGER.info("""

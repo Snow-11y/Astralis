@@ -17,9 +17,6 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -68,10 +65,6 @@ import java.util.stream.Collectors;
  * @author Created for MC 1.12.2 with Java 25
  * @version 2.0.0-UNIFIED
  */
-@Mod(modid = ChunkAnimator.MOD_ID,
-     name = ChunkAnimator.MOD_NAME,
-     version = ChunkAnimator.VERSION,
-     clientSideOnly = true)
 @SideOnly(Side.CLIENT)
 public final class ChunkAnimator {
     
@@ -79,14 +72,7 @@ public final class ChunkAnimator {
     //                           CONSTANTS & FIELDS
     // ═══════════════════════════════════════════════════════════════════════
     
-    public static final String MOD_ID = "chunkanimator";
-    public static final String MOD_NAME = "Chunk Animator Unified";
-    public static final String VERSION = "2.0.0";
-    
-    public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
-    
-    @Mod.Instance(MOD_ID)
-    public static ChunkAnimator instance;
+    public static final Logger LOGGER = LogManager.getLogger("Chunk Animator Unified");
     
     private static AnimationEngine animationEngine;
     private static ConfigManager configManager;
@@ -97,7 +83,7 @@ public final class ChunkAnimator {
     // ═══════════════════════════════════════════════════════════════════════
     
     @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public static void preInit() {
         configManager = new ConfigManager();
         configManager.load();
         
@@ -107,7 +93,7 @@ public final class ChunkAnimator {
     }
     
     @Mod.EventHandler
-    public void init(FMLInitializationEvent event) {
+    public static void init() {
         animationEngine = new AnimationEngine(configManager);
         renderingSystem = new RenderingSystem();
         
@@ -639,7 +625,7 @@ public final class ChunkAnimator {
     // ═══════════════════════════════════════════════════════════════════════
     
     public static class ConfigManager {
-        private static final Path CONFIG_PATH = Paths.get("config", MOD_ID + ".json");
+        private static final Path CONFIG_PATH = Paths.get("config", "chunkanimator.json");
         private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .create();

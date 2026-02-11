@@ -133,7 +133,6 @@ import net.minecraftforge.event.*;
 import net.minecraftforge.fluids.*;
 import net.minecraftforge.fml.client.*;
 import net.minecraftforge.fml.common.*;
-import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.common.eventhandler.*;
 import net.minecraftforge.fml.common.gameevent.*;
 import net.minecraftforge.fml.relauncher.*;
@@ -189,25 +188,6 @@ import org.spongepowered.asm.mixin.injection.callback.*;
  
 )
 public final class SnowyASM {
-    
-    // ═══════════════════════════════════════════════════════════════════════════
-    // MOD METADATA CONSTANTS
-    // ═══════════════════════════════════════════════════════════════════════════
-    
-    /** Mod identifier used for registration and configuration. */
-    public static final String MOD_ID = "snowy";
-    
-    /** Human-readable mod name displayed in mod lists. */
-    public static final String MOD_NAME = "SnowyASM";
-    
-    /** Semantic version following Major.Minor.Patch format. */
-    public static final String VERSION = "6.0.0";
-    
-    /** Build timestamp for debugging and support purposes. */
-    public static final String BUILD_TIME = "2025-02-03T00:00:00Z";
-    
-    /** Git commit hash for exact version identification. */
-    public static final String GIT_HASH = "development";
     
     // ═══════════════════════════════════════════════════════════════════════════
     // PERFORMANCE TUNING CONSTANTS
@@ -369,7 +349,6 @@ public final class SnowyASM {
     // ═══════════════════════════════════════════════════════════════════════════
     
     /** Singleton mod instance, set by Forge during construction. */
-    @Mod.Instance(MOD_ID)
     public static SnowyASM instance;
     
     /** Side-specific proxy for client/server behavior. */
@@ -414,7 +393,6 @@ public final class SnowyASM {
      *   <li>Early incompatibility detection</li>
      * </ul>
      */
-    @Mod.EventHandler
     public void onConstruction(FMLConstructionEvent event) {
         SnowyLogger.INSTANCE.info("SnowyASM construction phase starting");
         proxy.onConstruction(event);
@@ -430,8 +408,7 @@ public final class SnowyASM {
      *   <li>Incompatibility checks</li>
      * </ul>
      */
-    @Mod.EventHandler
-    public void onPreInit(FMLPreInitializationEvent event) {
+    public static void preInit() {
         SnowyLogger.INSTANCE.info("SnowyASM pre-initialization phase");
         proxy.checkIncompatibilities();
         proxy.onPreInit(event);
@@ -442,8 +419,7 @@ public final class SnowyASM {
      * 
      * <p>Primary setup after all mods have pre-initialized.
      */
-    @Mod.EventHandler
-    public void onInit(FMLInitializationEvent event) {
+    public static void init() {
         SnowyLogger.INSTANCE.info("SnowyASM initialization phase");
         proxy.onInit(event);
     }
@@ -453,8 +429,7 @@ public final class SnowyASM {
      * 
      * <p>Cleanup and optimization after all mods have initialized.
      */
-    @Mod.EventHandler
-    public void onPostInit(FMLPostInitializationEvent event) {
+    public static void postInit() {
         SnowyLogger.INSTANCE.info("SnowyASM post-initialization phase");
         proxy.onPostInit(event);
     }
@@ -470,7 +445,6 @@ public final class SnowyASM {
      *   <li>Statistics logging</li>
      * </ul>
      */
-    @Mod.EventHandler
     public void onLoadComplete(FMLLoadCompleteEvent event) {
         SnowyLogger.INSTANCE.info("SnowyASM load complete - performing final optimizations");
         proxy.onLoadComplete(event);
@@ -917,21 +891,21 @@ public final class SnowyASM {
         /**
          * Called during pre-initialization phase.
          */
-        public void onPreInit(FMLPreInitializationEvent event) {
+        public static void preInit() {
             // Server-side pre-init logic
         }
         
         /**
          * Called during initialization phase.
          */
-        public void onInit(FMLInitializationEvent event) {
+        public static void init() {
             // Server-side init logic
         }
         
         /**
          * Called during post-initialization phase.
          */
-        public void onPostInit(FMLPostInitializationEvent event) {
+        public static void postInit() {
             // Server-side post-init logic
         }
         
@@ -978,7 +952,7 @@ public final class SnowyASM {
         }
         
         @Override
-        public void onPreInit(FMLPreInitializationEvent event) {
+        public static void preInit() {
             super.onPreInit(event);
             
             // Register screenshot handler
@@ -988,7 +962,7 @@ public final class SnowyASM {
         }
         
         @Override
-        public void onInit(FMLInitializationEvent event) {
+        public static void init() {
             super.onInit(event);
             
             // Initialize stack trace deobfuscator
@@ -5530,7 +5504,6 @@ public final class SnowyASM {
     /**
      * Mod initialization and lifecycle management.
      */
-    @Mod.EventBusSubscriber(modid = MOD_ID)
     public static final class SnowyLifecycle {
         
         /** Tracks initialization state */
@@ -5543,7 +5516,6 @@ public final class SnowyASM {
          * Pre-initialization phase.
          * Called before registry events.
          */
-        @Mod.EventHandler
         public static void preInit(FMLPreInitializationEvent event) {
             if (preInitComplete) return;
             
@@ -5570,7 +5542,6 @@ public final class SnowyASM {
         /**
          * Main initialization phase.
          */
-        @Mod.EventHandler
         public static void init(FMLInitializationEvent event) {
             if (initComplete) return;
             
@@ -5596,7 +5567,6 @@ public final class SnowyASM {
         /**
          * Post-initialization phase.
          */
-        @Mod.EventHandler
         public static void postInit(FMLPostInitializationEvent event) {
             if (postInitComplete) return;
             
@@ -5684,7 +5654,6 @@ public final class SnowyASM {
         /**
          * Server stopping event handler.
          */
-        @Mod.EventHandler
         public static void onServerStopping(FMLServerStoppingEvent event) {
             LOGGER.info("[SnowyASM] Server stopping, cleaning up...");
             
@@ -5725,7 +5694,6 @@ public final class SnowyASM {
         /**
          * Registers all SnowyASM commands.
          */
-        @Mod.EventBusSubscriber(modid = MOD_ID)
         public static class CommandRegistration {
             
             @SubscribeEvent
@@ -7504,7 +7472,6 @@ public final class SnowyASM {
         
         @Override
         public String getModContainerClass() {
-            return null; // We use the @Mod annotation instead
         }
         
         @Override
@@ -16203,7 +16170,6 @@ public final class SnowyASM {
      *   <li>Logging vertex data deduplication statistics</li>
      * </ul>
      */
-    @Mod.EventBusSubscriber(modid = "snowyasm", value = Side.CLIENT)
     public static class ClientProxy extends CommonProxy {
         
         /** Runnables to execute after model loading/reload */
@@ -16875,7 +16841,6 @@ public final class SnowyASM {
         /**
          * Fixes invulnerability check to properly call super method.
          * 
-         * <p>This replaces @ModifyReturnValue which requires MixinExtras.
          */
         @Inject(
             method = "isEntityInvulnerable",
@@ -17004,7 +16969,6 @@ public final class SnowyASM {
         CLIENT, SERVER
     }
     
-    /** Stub for @Mod.EventBusSubscriber */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
     public @interface EventBusSubscriber {
