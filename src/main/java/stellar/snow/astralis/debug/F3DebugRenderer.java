@@ -1,6 +1,6 @@
 package stellar.snow.astralis.debug;
 
-import stellar.snow.astralis.api.common.GLBufferOpsBase;
+import stellar.snow.astralis.api.common.GLBuAerOpsBase;
 
 /**
  * F3DebugRenderer - Helper for Snowium Render debug display in MC F3 screen.
@@ -12,7 +12,7 @@ import stellar.snow.astralis.api.common.GLBufferOpsBase;
  * 
  * Display format:
  * ┌────────────────────────────────────────────────────────────────┐
- * │ [FF] Snowium Render: Vulkan 1.4 / SPIR-V 1.6                   │
+ * │ [A] Snowium Render: Vulkan 1.4 / SPIR-V 1.6                   │
  * │      ^^^^^^^^        ^^^^^^^^^^^^^^^^^^^^^^^^^                 │
  * │      Glowing         HOT PINK! (best versions)                 │
  * └────────────────────────────────────────────────────────────────┘
@@ -88,7 +88,7 @@ public final class F3DebugRenderer {
     /**
      * Get the Snowium Render header for F3 display.
      * 
-     * @return Formatted header: "[FF] Snowium Render:"
+     * @return Formatted header: "[A] Snowium Render:"
      */
     public static String getHeader() {
         return ASTRALIS_STYLE + "[" + GLBufferOpsBase.MOD_SHORT + "] " + 
@@ -139,7 +139,7 @@ public final class F3DebugRenderer {
     public static String getShortDebugLine(APIType apiType, int major, int minor) {
         String apiColor = getColorForAPI(apiType, major, minor);
         String shortVer = apiType.displayName + " " + major + "." + minor;
-        return ASTRALIS_STYLE + "[FF]" + RESET + " " + 
+        return ASTRALIS_STYLE + "[A]" + RESET + " " + 
                SNOWIUM_STYLE + "Snowium" + RESET + ": " +
                apiColor + shortVer + RESET;
     }
