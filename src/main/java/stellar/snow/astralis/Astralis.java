@@ -257,3 +257,5 @@ public class Astralis {
      */
     public static boolean isOpenGLESActive() {
         return InitializationManager.isOpenGLESActive
+            }
+}
