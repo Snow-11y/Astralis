@@ -274,7 +274,7 @@ For details, see the [PolyLang Wiki](https://github.com/Snow-11y/astralis/wiki/P
 | Windows 10/11 | ✅ Full | Vulkan, DirectX 12, OpenGL |
 | Linux | ✅ Full | Vulkan, OpenGL |
 | macOS | ⚠️ Partial | Metal (WIP), OpenGL fallback |
-| Android | 🚧 Experimental | OpenGL ES 3.2, Vulkan mobile |
+| Android | ⚠️ Partial | OpenGL ES 3.2, Vulkan mobile |
 
 ---
 
@@ -341,7 +341,7 @@ We welcome contributions! Here's how you can help:
 | **Lines of Code** | 500,000+ |
 | **Java Files** | 200+ |
 | **Supported Languages** | 60+ |
-| **Graphics APIs** | 4 (Vulkan, OpenGL, DirectX, Metal) |
+| **Graphics APIs** | 5 (Vulkan, OpenGL, OpenGL ES, DirectX, Metal) |
 | **API Versions** | 60+ combined |
 | **Platforms** | Windows, Linux, macOS, Mobile |
 
