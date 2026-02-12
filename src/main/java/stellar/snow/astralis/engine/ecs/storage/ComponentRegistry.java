@@ -517,7 +517,25 @@ public final class ComponentRegistry {
     }
 
     private void registerBuiltinTypes() {
-        // Could pre-register common types here
+        // Pre-register common primitive wrapper types with known sizes
+        // This allows them to be used immediately without explicit registration
+        
+        // Note: Actual registration would require knowing the component class structure
+        // Since component types are user-defined, we keep this minimal.
+        // Advanced users can register their common types via the public API.
+        
+        // Common primitive sizes (for reference):
+        // - byte/boolean: 1 byte
+        // - short/char: 2 bytes  
+        // - int/float: 4 bytes
+        // - long/double: 8 bytes
+        // - references: 8 bytes (64-bit JVM with compressed oops)
+        
+        // If there were standard component types, they would be registered like:
+        // register(Vector3f.class, 12, 4);  // 3 floats, 4-byte aligned
+        // register(Transform.class, 64, 16); // Complex transform, 16-byte aligned
+        
+        // For now, components are registered on-demand by users via builder() API
     }
 
     // ========================================================================
