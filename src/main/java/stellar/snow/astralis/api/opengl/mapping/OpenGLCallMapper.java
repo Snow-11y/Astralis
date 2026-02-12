@@ -314,6 +314,13 @@ public class OpenGLCallMapper {
     private static int targetVersion = VERSION_4_6;
     private static int effectiveVersion = VERSION_1_0;
     
+    // Vendor information for driver-specific workarounds
+    private static String gpuVendor = "";
+    private static String gpuRenderer = "";
+    private static boolean isIntelGPU = false;
+    private static boolean isNvidiaGPU = false;
+    private static boolean isAMDGPU = false;
+    
     // State tracking for stateless calls
     private static final ThreadLocal<StateTracker> stateTracker = ThreadLocal.withInitial(StateTracker::new);
     
@@ -667,8 +674,10 @@ public class OpenGLCallMapper {
             }
             
             detectVersion();
+            detectVendor();
             detectExtensions();
             determineFeatures();
+            applyVendorWorkarounds();
             determineEffectiveVersion();
             selectProvider();
             installMinecraftStateHooks();
@@ -680,6 +689,7 @@ public class OpenGLCallMapper {
             }
             
             LOGGER.info("OpenGLCallMapper initialized successfully - Effective version: " + effectiveVersion);
+            LOGGER.info("GPU Vendor: " + gpuVendor + " | Renderer: " + gpuRenderer);
         } finally {
             initLock.unlock();
         }
@@ -782,6 +792,60 @@ public class OpenGLCallMapper {
                 } catch (Exception e) {
                     glslVersion = 110;
                 }
+            }
+        }
+    }
+    
+    /**
+     * Detect GPU vendor and renderer for driver-specific workarounds
+     */
+    private static void detectVendor() {
+        try {
+            gpuVendor = org.lwjgl.opengl.GL11.glGetString(org.lwjgl.opengl.GL11.GL_VENDOR);
+            gpuRenderer = org.lwjgl.opengl.GL11.glGetString(org.lwjgl.opengl.GL11.GL_RENDERER);
+            
+            if (gpuVendor == null) gpuVendor = "Unknown";
+            if (gpuRenderer == null) gpuRenderer = "Unknown";
+            
+            // Normalize for comparison
+            String vendorLower = gpuVendor.toLowerCase();
+            String rendererLower = gpuRenderer.toLowerCase();
+            
+            // Detect vendors
+            isIntelGPU = vendorLower.contains("intel") || rendererLower.contains("intel");
+            isNvidiaGPU = vendorLower.contains("nvidia") || rendererLower.contains("nvidia");
+            isAMDGPU = vendorLower.contains("amd") || vendorLower.contains("ati") || 
+                       rendererLower.contains("radeon");
+            
+            if (isIntelGPU) {
+                LOGGER.warn("Intel GPU detected - applying driver-specific workarounds");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to detect GPU vendor", e);
+            gpuVendor = "Unknown";
+            gpuRenderer = "Unknown";
+        }
+    }
+    
+    /**
+     * Apply vendor-specific workarounds for known driver issues
+     */
+    private static void applyVendorWorkarounds() {
+        // Intel iGPU Problem: Intel drivers claim DSA support but have broken implementations
+        // Force Intel GPUs to use bind-to-edit (GL33Provider) instead of DSA (GL45Provider)
+        if (isIntelGPU && ARB_direct_state_access) {
+            LOGGER.warn("Intel GPU detected with DSA support - disabling DSA due to known driver bugs");
+            LOGGER.warn("Forcing GL33Provider (bind-to-edit) instead of GL45Provider (DSA)");
+            
+            // Disable DSA to force selection of GL33Provider
+            ARB_direct_state_access = false;
+            hasDSA = false;
+            
+            // Also be conservative with other advanced features on Intel
+            if (GL45) {
+                LOGGER.info("Downgrading effective GL version for Intel from 4.5 to 3.3");
+                GL45 = false;
+                GL44 = false;
             }
         }
     }
@@ -1174,6 +1238,65 @@ public class OpenGLCallMapper {
     
     public static StateTracker getState() {
         return stateTracker.get();
+    }
+    
+    /**
+     * Force synchronization of state tracker with actual OpenGL state
+     * 
+     * Call this at the start of every frame to re-anchor the state tracker
+     * to the driver's actual state. This prevents desync when external code
+     * (like vanilla Minecraft) binds VAOs manually, bypassing our API.
+     * 
+     * Known issue: Some "junk code" devs might forget to unbind a VAO.
+     * If they bind a VAO *manually* (bypassing our API), our tracker will be desynced.
+     */
+    public static void forceSync() {
+        assertRenderThread();
+        
+        StateTracker state = getState();
+        
+        // Re-query all critical bindings from OpenGL
+        if (hasVAO && GL30) {
+            state.boundVAO = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL30.GL_VERTEX_ARRAY_BINDING);
+        }
+        
+        if (hasVBO && GL15) {
+            state.boundArrayBuffer = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER_BINDING);
+            state.boundElementBuffer = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL15.GL_ELEMENT_ARRAY_BUFFER_BINDING);
+        }
+        
+        if (hasFBO && GL30) {
+            state.boundFramebuffer = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_BINDING);
+            state.boundReadFramebuffer = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL30.GL_READ_FRAMEBUFFER_BINDING);
+            state.boundDrawFramebuffer = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+        }
+        
+        if (hasShaders && GL20) {
+            state.boundProgram = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM);
+        }
+        
+        // Re-query active texture unit
+        if (GL13) {
+            state.activeTextureUnit = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL13.GL_ACTIVE_TEXTURE) 
+                                     - org.lwjgl.opengl.GL13.GL_TEXTURE0;
+        }
+        
+        // Re-query texture bindings for active unit
+        if (state.activeTextureUnit >= 0 && state.activeTextureUnit < state.boundTextures.length) {
+            state.boundTextures[state.activeTextureUnit] = 
+                org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL11.GL_TEXTURE_BINDING_2D);
+        }
+        
+        // Re-query enable states
+        state.depthTest = org.lwjgl.opengl.GL11.glIsEnabled(org.lwjgl.opengl.GL11.GL_DEPTH_TEST);
+        state.blend = org.lwjgl.opengl.GL11.glIsEnabled(org.lwjgl.opengl.GL11.GL_BLEND);
+        state.cullFace = org.lwjgl.opengl.GL11.glIsEnabled(org.lwjgl.opengl.GL11.GL_CULL_FACE);
+        state.scissorTest = org.lwjgl.opengl.GL11.glIsEnabled(org.lwjgl.opengl.GL11.GL_SCISSOR_TEST);
+        state.stencilTest = org.lwjgl.opengl.GL11.glIsEnabled(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+        
+        if (debugMode) {
+            LOGGER.debug("State tracker synchronized with GL driver state");
+        }
     }
     
     // ========================================================================
@@ -4020,7 +4143,77 @@ public class OpenGLCallMapper {
     public static void clearAllCaches() {
         shaderInfoCache.clear();
         programInfoCache.clear();
+        framebufferCache.clear();
+        renderbufferCache.clear();
         getState().reset();
+        
+        LOGGER.info("All OpenGL caches cleared");
+    }
+    
+    /**
+     * Reinitialize after OpenGL context loss
+     * 
+     * Context Loss occurs when:
+     * - User changes display scale
+     * - User toggles fullscreen
+     * - User switches between monitors
+     * - Graphics driver crashes and recovers
+     * - System suspends and resumes
+     * 
+     * When this happens, the entire OpenGL context is destroyed and recreated.
+     * All our cached IDs become invalid "ghost" IDs that don't exist in the new context.
+     * 
+     * This method ensures:
+     * 1. All caches are cleared
+     * 2. Singleton instance is marked as uninitialized
+     * 3. All pooled objects are reset
+     * 4. State tracker is reset
+     * 5. Ready for re-initialization on next use
+     */
+    public static void reinitializeAfterContextLoss() {
+        initLock.lock();
+        try {
+            LOGGER.warn("Context loss detected - reinitializing OpenGL mapper");
+            
+            // Clear all caches - these contain IDs from the old context
+            clearAllCaches();
+            
+            // Reset initialization flag - forces re-detection on next call
+            initialized = false;
+            
+            // Reset provider - will be re-selected on next initialize()
+            activeProvider = null;
+            
+            // Reset all capability flags - will be re-detected
+            glVersion = 0;
+            glslVersion = 0;
+            GL10 = GL11 = GL12 = GL13 = GL14 = GL15 = false;
+            GL20 = GL21 = GL30 = GL31 = GL32 = GL33 = false;
+            GL40 = GL41 = GL42 = GL43 = GL44 = GL45 = GL46 = false;
+            
+            // Reset feature flags
+            hasVBO = hasVAO = hasFBO = hasUBO = hasSSBO = false;
+            hasShaders = hasGeometryShaders = hasTessellation = hasComputeShaders = false;
+            hasInstancing = hasBaseInstance = hasMultiDrawIndirect = false;
+            hasDSA = hasImmutableStorage = hasPersistentMapping = hasMultibind = false;
+            
+            // Reset vendor info
+            gpuVendor = "";
+            gpuRenderer = "";
+            isIntelGPU = isNvidiaGPU = isAMDGPU = false;
+            
+            // Reset state tracker for this thread
+            stateTracker.get().reset();
+            
+            LOGGER.info("Context loss recovery complete - ready for re-initialization");
+            
+            // Automatically re-initialize if we're on the render thread
+            if (Thread.currentThread() == renderThread) {
+                initialize();
+            }
+        } finally {
+            initLock.unlock();
+        }
     }
     
     // ========================================================================
