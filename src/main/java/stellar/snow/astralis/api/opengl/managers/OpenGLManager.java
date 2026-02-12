@@ -2,6 +2,9 @@ package stellar.snow.astralis.api.opengl.managers;
 
 import stellar.snow.astralis.Config;
 import stellar.snow.astralis.api.opengl.mapping.OpenGLCallMapper;
+import stellar.snow.astralis.api.opengl.mapping.GLSLCallMapper;
+import stellar.snow.astralis.api.opengl.pipeline.OpenGLPipelineProvider;
+import stellar.snow.astralis.api.opengl.pipeline.GLSLPipelineProvider;
 
 import stellar.snow.astralis.api.opengl.buffer.GLBufferOps10;
 import stellar.snow.astralis.api.opengl.buffer.GLBufferOps11;
@@ -669,6 +672,14 @@ public final class OpenGLManager {
 
     private final BufferDispatch buffer;
     private final State state;
+    
+    // Pipeline providers for GLSL and GL calls
+    private final GLSLPipelineProvider glslPipeline;
+    private final OpenGLPipelineProvider glPipeline;
+    
+    // Mappers for call routing
+    private final GLSLCallMapper glslMapper;
+    private final OpenGLCallMapper glMapper;
 
     // cached capability flags (read once, used for strict checks)
     private final boolean hasMultiDrawIndirect;   // GL 4.3+ / extension
@@ -692,6 +703,14 @@ public final class OpenGLManager {
 
         this.buffer = buffer;
         this.state = state;
+        
+        // Initialize pipeline providers
+        this.glslPipeline = GLSLPipelineProvider.getInstance();
+        this.glPipeline = OpenGLPipelineProvider.getInstance();
+        
+        // Initialize mappers as backend (NOT MC render backend)
+        this.glslMapper = GLSLCallMapper.getInstance();
+        this.glMapper = OpenGLCallMapper.getInstance();
 
         this.hasMultiDrawIndirect = hasMDI;
         this.hasPersistentMapping = hasPM;
@@ -1495,6 +1514,42 @@ public final class OpenGLManager {
     }
 
     // ---------------------------------------------------------------------
+    // Pipeline and Mapper Access (for game integration via mixins)
+    // ---------------------------------------------------------------------
+    
+    /**
+     * Get the GLSL pipeline provider for shader operations.
+     * This is used by mixins to route GLSL calls through the pipeline to the game.
+     */
+    public GLSLPipelineProvider getGLSLPipeline() {
+        return glslPipeline;
+    }
+    
+    /**
+     * Get the OpenGL pipeline provider for GL operations.
+     * This is used by mixins to route GL calls through the pipeline to the game.
+     */
+    public OpenGLPipelineProvider getGLPipeline() {
+        return glPipeline;
+    }
+    
+    /**
+     * Get the GLSL call mapper (backend, not MC render backend).
+     * This provides low-level GLSL translation capabilities.
+     */
+    public GLSLCallMapper getGLSLMapper() {
+        return glslMapper;
+    }
+    
+    /**
+     * Get the OpenGL call mapper (backend, not MC render backend).
+     * This provides low-level GL call translation and routing.
+     */
+    public OpenGLCallMapper getGLMapper() {
+        return glMapper;
+    }
+
+    // ---------------------------------------------------------------------
     // Shutdown: no leaks (pipelines + mapper caches)
     // 
     // NOTE: This assumes single GL context usage. If multiple contexts exist
@@ -1510,10 +1565,31 @@ public final class OpenGLManager {
         try {
             buffer.shutdown();
         } catch (Throwable ignored) {}
+        
+        // Cleanup GLSL pipeline
+        try {
+            if (glslPipeline != null) {
+                glslPipeline.shutdown();
+            }
+        } catch (Throwable ignored) {}
+        
+        // Cleanup GL pipeline
+        try {
+            if (glPipeline != null) {
+                glPipeline.shutdown();
+            }
+        } catch (Throwable ignored) {}
 
         // Clear mapper caches (shader/program caches, etc.) if present.
         try {
             OpenGLCallMapper.clearAllCaches();
+        } catch (Throwable ignored) {}
+        
+        // Clear GLSL mapper caches
+        try {
+            if (glslMapper != null) {
+                glslMapper.clearAllCaches();
+            }
         } catch (Throwable ignored) {}
 
         state.invalidate();
@@ -1537,5 +1613,309 @@ public final class OpenGLManager {
      */
     public Thread getRenderThread() {
         return renderThread;
+    }
+    
+    // =====================================================================
+    // MIXINS - Game integration layer
+    // These are embedded here to route calls through pipelines
+    // =====================================================================
+    
+    /**
+     * Mixin for EntityRenderer - hooks game rendering to route through GL pipeline.
+     * 
+     * Target: net.minecraft.client.renderer.EntityRenderer
+     * 
+     * Usage in mixin JSON:
+     * "targets": ["net.minecraft.client.renderer.EntityRenderer"],
+     * "mixins": ["stellar.snow.astralis.api.opengl.managers.OpenGLManager$MixinGameRenderer"]
+     */
+    public static class MixinGameRenderer {
+        private static OpenGLManager glManager;
+        private static OpenGLPipelineProvider glPipeline;
+        
+        /**
+         * @Inject(method = "renderWorld", at = @At("HEAD"))
+         */
+        public static void onRenderWorldStart(float partialTicks, long finishTimeNano) {
+            if (!OpenGLManager.isInitialized()) return;
+            
+            if (glManager == null) {
+                glManager = OpenGLManager.getSafe();
+                glPipeline = glManager.getGLPipeline();
+            }
+            
+            glManager.invalidateState();
+            glPipeline.beginFrame();
+        }
+        
+        /**
+         * @Inject(method = "renderWorld", at = @At("RETURN"))
+         */
+        public static void onRenderWorldEnd(float partialTicks, long finishTimeNano) {
+            if (glPipeline != null) {
+                glPipeline.endFrame();
+            }
+        }
+        
+        /**
+         * @Inject(method = "updateCameraAndRender", at = @At("HEAD"))
+         */
+        public static void onUpdateCameraAndRender(float partialTicks, long nanoTime) {
+            if (!OpenGLManager.isInitialized()) return;
+            
+            if (glManager == null) {
+                glManager = OpenGLManager.getSafe();
+                glPipeline = glManager.getGLPipeline();
+            }
+        }
+    }
+    
+    /**
+     * Mixin for ShaderManager - hooks GLSL operations to route through GLSL pipeline.
+     * 
+     * Target: net.minecraft.client.shader.ShaderManager
+     * 
+     * Usage in mixin JSON:
+     * "targets": ["net.minecraft.client.shader.ShaderManager"],
+     * "mixins": ["stellar.snow.astralis.api.opengl.managers.OpenGLManager$MixinShaderManager"]
+     */
+    public static class MixinShaderManager {
+        private static OpenGLManager glManager;
+        private static GLSLPipelineProvider glslPipeline;
+        private static GLSLCallMapper glslMapper;
+        
+        /**
+         * @Inject(method = "<init>", at = @At("RETURN"))
+         */
+        public static void onInit() {
+            if (OpenGLManager.isInitialized()) {
+                glManager = OpenGLManager.getSafe();
+                glslPipeline = glManager.getGLSLPipeline();
+                glslMapper = glManager.getGLSLMapper();
+            }
+        }
+        
+        /**
+         * @Inject(method = "createShader", at = @At("HEAD"), cancellable = true)
+         * Returns compiled shader ID or -1 to let vanilla handle it
+         */
+        public static int onCreateShader(int shaderType, String name, String source) {
+            if (!OpenGLManager.isInitialized() || glslPipeline == null) {
+                return -1; // Let vanilla handle
+            }
+            
+            try {
+                return glslPipeline.compileShader(shaderType, name, source);
+            } catch (Exception e) {
+                System.err.println("[MixinShaderManager] Failed to compile shader: " + e.getMessage());
+                return -1; // Let vanilla handle
+            }
+        }
+        
+        /**
+         * @Inject(method = "linkProgram", at = @At("HEAD"), cancellable = true)
+         * Returns true if successful, false to let vanilla handle it
+         */
+        public static boolean onLinkProgram(int program) {
+            if (!OpenGLManager.isInitialized() || glslPipeline == null) {
+                return false; // Let vanilla handle
+            }
+            
+            try {
+                return glslPipeline.linkProgram(program);
+            } catch (Exception e) {
+                System.err.println("[MixinShaderManager] Failed to link program: " + e.getMessage());
+                return false; // Let vanilla handle
+            }
+        }
+        
+        /**
+         * @Inject(method = "getUniformLocation", at = @At("HEAD"), cancellable = true)
+         * Returns uniform location or -1 to let vanilla handle it
+         */
+        public static int onGetUniformLocation(int program, String name) {
+            if (glslPipeline != null) {
+                try {
+                    return glslPipeline.getUniformLocation(program, name);
+                } catch (Exception ignored) {
+                    return -1; // Let vanilla handle
+                }
+            }
+            return -1;
+        }
+    }
+    
+    /**
+     * Mixin for GlStateManager - hooks all GL state changes to route through OpenGLManager.
+     * 
+     * Target: net.minecraft.client.renderer.GlStateManager
+     * 
+     * Usage in mixin JSON:
+     * "targets": ["net.minecraft.client.renderer.GlStateManager"],
+     * "mixins": ["stellar.snow.astralis.api.opengl.managers.OpenGLManager$MixinGlStateManager"]
+     */
+    public static class MixinGlStateManager {
+        private static OpenGLManager glManager;
+        
+        private static OpenGLManager getManager() {
+            if (glManager == null && OpenGLManager.isInitialized()) {
+                glManager = OpenGLManager.getSafe();
+            }
+            return glManager;
+        }
+        
+        // Buffer operations
+        /**
+         * @Redirect(method = "bindBuffer", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL15;glBindBuffer(II)V"))
+         */
+        public static void redirectBindBuffer(int target, int buffer) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.bindBuffer(target, buffer);
+            } else {
+                org.lwjgl.opengl.GL15.glBindBuffer(target, buffer);
+            }
+        }
+        
+        // Texture operations
+        /**
+         * @Redirect(method = "activeTexture", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL13;glActiveTexture(I)V"))
+         */
+        public static void redirectActiveTexture(int texture) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.activeTexture(texture);
+            } else {
+                org.lwjgl.opengl.GL13.glActiveTexture(texture);
+            }
+        }
+        
+        /**
+         * @Redirect(method = "bindTexture", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glBindTexture(II)V"))
+         */
+        public static void redirectBindTexture(int target, int texture) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.bindTexture(target, texture);
+            } else {
+                org.lwjgl.opengl.GL11.glBindTexture(target, texture);
+            }
+        }
+        
+        // Enable/Disable
+        /**
+         * @Redirect(method = "enableBlend|enableDepth|enableCull|enableScissor|enableStencil|enableAlpha", 
+         *           at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glEnable(I)V"))
+         */
+        public static void redirectEnable(int cap) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.enable(cap);
+            } else {
+                org.lwjgl.opengl.GL11.glEnable(cap);
+            }
+        }
+        
+        /**
+         * @Redirect(method = "disableBlend|disableDepth|disableCull|disableScissor|disableStencil|disableAlpha",
+         *           at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glDisable(I)V"))
+         */
+        public static void redirectDisable(int cap) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.disable(cap);
+            } else {
+                org.lwjgl.opengl.GL11.glDisable(cap);
+            }
+        }
+        
+        // Depth operations
+        /**
+         * @Redirect(method = "depthMask", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glDepthMask(Z)V"))
+         */
+        public static void redirectDepthMask(boolean flag) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.depthMask(flag);
+            } else {
+                org.lwjgl.opengl.GL11.glDepthMask(flag);
+            }
+        }
+        
+        /**
+         * @Redirect(method = "depthFunc", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glDepthFunc(I)V"))
+         */
+        public static void redirectDepthFunc(int func) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.depthFunc(func);
+            } else {
+                org.lwjgl.opengl.GL11.glDepthFunc(func);
+            }
+        }
+        
+        // Blend operations
+        /**
+         * @Redirect(method = "blendFunc", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL14;glBlendFunc(II)V"))
+         */
+        public static void redirectBlendFunc(int sfactor, int dfactor) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.blendFunc(sfactor, dfactor);
+            } else {
+                org.lwjgl.opengl.GL14.glBlendFunc(sfactor, dfactor);
+            }
+        }
+        
+        /**
+         * @Redirect(method = "blendFuncSeparate", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL14;glBlendFuncSeparate(IIII)V"))
+         */
+        public static void redirectBlendFuncSeparate(int srcRGB, int dstRGB, int srcA, int dstA) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.blendFuncSeparate(srcRGB, dstRGB, srcA, dstA);
+            } else {
+                org.lwjgl.opengl.GL14.glBlendFuncSeparate(srcRGB, dstRGB, srcA, dstA);
+            }
+        }
+        
+        // Program operations
+        /**
+         * @Redirect(method = "useProgram", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL20;glUseProgram(I)V"))
+         */
+        public static void redirectUseProgram(int program) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.useProgram(program);
+            } else {
+                org.lwjgl.opengl.GL20.glUseProgram(program);
+            }
+        }
+        
+        // VAO operations
+        /**
+         * @Redirect(method = "bindVertexArray", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL30;glBindVertexArray(I)V"))
+         */
+        public static void redirectBindVertexArray(int vao) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.bindVertexArray(vao);
+            } else {
+                org.lwjgl.opengl.GL30.glBindVertexArray(vao);
+            }
+        }
+        
+        // Framebuffer operations
+        /**
+         * @Redirect(method = "bindFramebuffer", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL30;glBindFramebuffer(II)V"))
+         */
+        public static void redirectBindFramebuffer(int target, int framebuffer) {
+            OpenGLManager mgr = getManager();
+            if (mgr != null) {
+                mgr.bindFramebuffer(target, framebuffer);
+            } else {
+                org.lwjgl.opengl.GL30.glBindFramebuffer(target, framebuffer);
+            }
+        }
     }
 }
