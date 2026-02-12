@@ -19,6 +19,11 @@ import java.nio.file.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+// Java 25 FFM (Foreign Function & Memory API)
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+
 /**
  * GLSLCallMapper - Universal GLSL Translation Layer
  * 
@@ -309,6 +314,71 @@ public final class GLSLCallMapper {
         memoryPool.trim();
         tokenizerPool.trim();
         parserPool.trim();
+    }
+    
+    /**
+     * Shutdown the GLSL mapper and free all resources
+     * 
+     * CRITICAL: Must be called on game shutdown to prevent memory-mapped file locks
+     * and to properly free all off-heap FFM Arena memory.
+     * 
+     * This method:
+     * 1. Shuts down the memory pool (closes FFM Arena)
+     * 2. Clears all caches
+     * 3. Releases pooled objects
+     * 4. Resets the singleton
+     */
+    public static void shutdown() {
+        synchronized (LOCK) {
+            if (INSTANCE != null) {
+                GLSLCallMapper instance = INSTANCE;
+                
+                // Clear all caches first
+                instance.releaseResources();
+                
+                // Shutdown the memory pool - this closes the FFM Arena
+                instance.memoryPool.shutdown();
+                
+                // Clear singleton reference
+                INSTANCE = null;
+                
+                LogManager.getLogger("GLSLCallMapper").info("GLSLCallMapper shutdown complete");
+            }
+        }
+    }
+    
+    /**
+     * Reinitialize after OpenGL context loss
+     * 
+     * Context Loss occurs when:
+     * - User changes display scale
+     * - User toggles fullscreen
+     * - User switches between monitors
+     * - Graphics driver crashes and recovers
+     * - System suspends and resumes
+     * 
+     * When this happens, all our GLSL shader compilations become invalid.
+     * This method ensures:
+     * 1. All caches are cleared
+     * 2. Singleton instance is recreated
+     * 3. Memory pool is reset
+     * 4. Hardware capabilities are re-detected
+     */
+    public static void reinitializeAfterContextLoss() {
+        synchronized (LOCK) {
+            LogManager.getLogger("GLSLCallMapper").warn("Context loss detected - reinitializing GLSL mapper");
+            
+            if (INSTANCE != null) {
+                // Don't shutdown completely - just clear caches
+                INSTANCE.releaseResources();
+            }
+            
+            // Force recreation of singleton on next getInstance()
+            INSTANCE = null;
+            
+            // Next call to getInstance() will create a new instance with fresh detection
+            LogManager.getLogger("GLSLCallMapper").info("GLSL mapper ready for re-initialization");
+        }
     }
 }
 
@@ -848,6 +918,11 @@ enum GLSLExtension {
 
 final class GLSLMemoryPool {
     
+    // FFM Arena for off-heap memory management
+    // Uses Arena.ofShared() for thread-safe access across the pool
+    private Arena arena;
+    private volatile boolean closed = false;
+    
     // StringBuilder pool
     private final ArrayDeque<StringBuilder> stringBuilderPool = new ArrayDeque<>(32);
     private static final int SB_INITIAL_CAPACITY = 4096;
@@ -871,7 +946,12 @@ final class GLSLMemoryPool {
     private final AtomicLong allocations = new AtomicLong();
     private final AtomicLong poolHits = new AtomicLong();
     
+    private static final Logger LOGGER = LogManager.getLogger("GLSLMemoryPool");
+    
     GLSLMemoryPool() {
+        // Create shared arena for thread-safe off-heap memory
+        this.arena = Arena.ofShared();
+        
         // Pre-allocate some objects
         for (int i = 0; i < 8; i++) {
             stringBuilderPool.offer(new StringBuilder(SB_INITIAL_CAPACITY));
@@ -991,6 +1071,69 @@ final class GLSLMemoryPool {
         synchronized (charArrayPool) { charArrayPool.clear(); }
         synchronized (tokenListPool) { tokenListPool.clear(); }
         nodePoolMap.clear();
+    }
+    
+    /**
+     * Get the FFM Arena for off-heap memory allocations
+     * This is used for zero-copy buffer operations
+     */
+    Arena getArena() {
+        if (closed) {
+            throw new IllegalStateException("GLSLMemoryPool has been closed");
+        }
+        return arena;
+    }
+    
+    /**
+     * Shutdown the memory pool and close the FFM Arena
+     * 
+     * CRITICAL: Must be called on game shutdown to prevent memory-mapped file locks
+     * and to properly free off-heap memory.
+     * 
+     * After calling this method, the pool cannot be used anymore.
+     */
+    void shutdown() {
+        if (closed) {
+            return;
+        }
+        
+        synchronized (this) {
+            if (closed) {
+                return;
+            }
+            
+            LOGGER.info("Shutting down GLSLMemoryPool");
+            
+            // Clear all pools first
+            releaseAll();
+            
+            // Close the FFM Arena - this frees all off-heap memory
+            // and releases any memory-mapped file locks
+            try {
+                if (arena != null) {
+                    arena.close();
+                    LOGGER.info("FFM Arena closed successfully");
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error closing FFM Arena", e);
+            } finally {
+                arena = null;
+                closed = true;
+            }
+            
+            long totalOps = allocations.get() + poolHits.get();
+            if (totalOps > 0) {
+                LOGGER.info(String.format("GLSLMemoryPool stats - Allocations: %d, Pool hits: %d, Hit rate: %.2f%%",
+                    allocations.get(), poolHits.get(), getHitRate() * 100));
+            }
+        }
+    }
+    
+    /**
+     * Check if the pool is closed
+     */
+    boolean isClosed() {
+        return closed;
     }
     
     void trim() {
