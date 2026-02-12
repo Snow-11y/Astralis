@@ -848,6 +848,41 @@ public final class Config {
         defaults.put("validateOnEveryCall", false);
         
         // ═══════════════════════════════════════════════════════════════════════════════════
+        // OpenGL Manager Settings (Pipeline & Mapper Configuration)
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        
+        // OpenGL Version Control
+        defaults.put("openglMaxGLVersion", 46); // Maximum GL version to use (33, 45, 46, etc.)
+        defaults.put("openglTargetGLSLVersion", 330); // Target GLSL version for shader compilation
+        
+        // Pipeline Configuration
+        defaults.put("openglUseMappersAsBackend", true); // Use mappers as backend (not MC render)
+        defaults.put("openglEnableGLSLPipeline", true); // Enable GLSL pipeline for shader operations
+        defaults.put("openglEnableGLPipeline", true); // Enable GL pipeline for GL operations
+        
+        // Advanced Features
+        defaults.put("openglUseDSA", true); // Enable Direct State Access (GL 4.5+)
+        defaults.put("openglUsePersistentMapping", true); // Enable persistent buffer mapping (GL 4.4+)
+        defaults.put("openglUseMultiDrawIndirect", true); // Enable multi-draw indirect (GL 4.3+)
+        
+        // Performance Caching
+        defaults.put("openglCacheBinds", true); // Cache bind calls (HIGHLY RECOMMENDED)
+        defaults.put("openglCacheCommonState", true); // Cache enable/disable, depth, blend
+        defaults.put("openglCacheShaderCompilation", true); // Cache compiled shaders
+        defaults.put("openglCacheUniformLocations", true); // Cache uniform locations
+        
+        // Translation Settings
+        defaults.put("openglStrictNoEmulation", true); // No emulation, translation only
+        defaults.put("openglEnableGLSLTranslation", true); // Enable GLSL version translation
+        defaults.put("openglGLSLOptimizationLevel", 2); // GLSL optimization (0-3)
+        
+        // Debug and Logging
+        defaults.put("openglDebugMode", false); // Enable debug mode (impacts performance)
+        defaults.put("openglLogAllGLCalls", false); // Log all GL calls (extremely verbose)
+        defaults.put("openglLogShaderCompilation", false); // Log shader compilation
+        defaults.put("openglThrowOnInitFailure", false); // Throw exception on init failure
+        
+        // ═══════════════════════════════════════════════════════════════════════════════════
         // ECS (Entity Component System) Settings - Kirino-Competitive Edition
         // ═══════════════════════════════════════════════════════════════════════════════════
         
@@ -3203,6 +3238,67 @@ public final class Config {
     public static int getGLSLMaxUniformBlockSize() { if (!initialized.get()) initialize(); return getInt("glslMaxUniformBlockSize"); }
     public static boolean isGLSLVerboseCompilation() { if (!initialized.get()) initialize(); return getBoolean("glslVerboseCompilation"); }
     public static String getGLSLValidationMode() { if (!initialized.get()) initialize(); return getString("glslValidationMode"); }
+
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    // OpenGL Manager Configuration Getters
+    // ═══════════════════════════════════════════════════════════════════════════════════
+    
+    /** Maximum GL version to use */
+    public static int getOpenGLMaxGLVersion() { if (!initialized.get()) initialize(); return getInt("openglMaxGLVersion"); }
+    
+    /** Target GLSL version for shader compilation */
+    public static int getOpenGLTargetGLSLVersion() { if (!initialized.get()) initialize(); return getInt("openglTargetGLSLVersion"); }
+    
+    /** Use mappers as backend (not MC render) */
+    public static boolean getOpenGLUseMappersAsBackend() { if (!initialized.get()) initialize(); return getBoolean("openglUseMappersAsBackend"); }
+    
+    /** Enable GLSL pipeline */
+    public static boolean getOpenGLEnableGLSLPipeline() { if (!initialized.get()) initialize(); return getBoolean("openglEnableGLSLPipeline"); }
+    
+    /** Enable GL pipeline */
+    public static boolean getOpenGLEnableGLPipeline() { if (!initialized.get()) initialize(); return getBoolean("openglEnableGLPipeline"); }
+    
+    /** Enable Direct State Access (GL 4.5+) */
+    public static boolean getOpenGLUseDSA() { if (!initialized.get()) initialize(); return getBoolean("openglUseDSA"); }
+    
+    /** Enable persistent buffer mapping (GL 4.4+) */
+    public static boolean getOpenGLUsePersistentMapping() { if (!initialized.get()) initialize(); return getBoolean("openglUsePersistentMapping"); }
+    
+    /** Enable multi-draw indirect (GL 4.3+) */
+    public static boolean getOpenGLUseMultiDrawIndirect() { if (!initialized.get()) initialize(); return getBoolean("openglUseMultiDrawIndirect"); }
+    
+    /** Cache bind calls */
+    public static boolean getOpenGLCacheBinds() { if (!initialized.get()) initialize(); return getBoolean("openglCacheBinds"); }
+    
+    /** Cache common state */
+    public static boolean getOpenGLCacheCommonState() { if (!initialized.get()) initialize(); return getBoolean("openglCacheCommonState"); }
+    
+    /** Cache shader compilation */
+    public static boolean getOpenGLCacheShaderCompilation() { if (!initialized.get()) initialize(); return getBoolean("openglCacheShaderCompilation"); }
+    
+    /** Cache uniform locations */
+    public static boolean getOpenGLCacheUniformLocations() { if (!initialized.get()) initialize(); return getBoolean("openglCacheUniformLocations"); }
+    
+    /** Strict mode: no emulation */
+    public static boolean getOpenGLStrictNoEmulation() { if (!initialized.get()) initialize(); return getBoolean("openglStrictNoEmulation"); }
+    
+    /** Enable GLSL translation */
+    public static boolean getOpenGLEnableGLSLTranslation() { if (!initialized.get()) initialize(); return getBoolean("openglEnableGLSLTranslation"); }
+    
+    /** GLSL optimization level (0-3) */
+    public static int getOpenGLGLSLOptimizationLevel() { if (!initialized.get()) initialize(); return getInt("openglGLSLOptimizationLevel"); }
+    
+    /** Debug mode */
+    public static boolean getOpenGLDebugMode() { if (!initialized.get()) initialize(); return getBoolean("openglDebugMode"); }
+    
+    /** Log all GL calls */
+    public static boolean getOpenGLLogAllGLCalls() { if (!initialized.get()) initialize(); return getBoolean("openglLogAllGLCalls"); }
+    
+    /** Log shader compilation */
+    public static boolean getOpenGLLogShaderCompilation() { if (!initialized.get()) initialize(); return getBoolean("openglLogShaderCompilation"); }
+    
+    /** Throw exception on init failure */
+    public static boolean getOpenGLThrowOnInitFailure() { if (!initialized.get()) initialize(); return getBoolean("openglThrowOnInitFailure"); }
 
     // ═══════════════════════════════════════════════════════════════════════════════════
     // SECTION 12D: DEEPMIX INTEGRATION GETTERS
