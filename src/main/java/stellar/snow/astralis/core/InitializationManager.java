@@ -527,32 +527,41 @@ public final class InitializationManager {
             logInit("  - OpenGL Version: " + glMajor + "." + glMinor);
             
             // Initialize OpenGL Manager for optimized state management
+            // This coordinates GLSL + GL pipelines and uses mappers as backend
             try {
-                stellar.snow.astralis.api.opengl.managers.OpenGLManager glManager = 
-                    stellar.snow.astralis.api.opengl.managers.OpenGLManager.getInstance();
-                openglManager.set(glManager);
-                logInit("  - OpenGL Manager: INITIALIZED");
-            } catch (Exception e) {
-                LOGGER.warn("OpenGL Manager initialization failed, continuing without it", e);
-            }
-            
-            // Initialize OpenGL Pipeline Provider
-            try {
-                stellar.snow.astralis.api.opengl.pipeline.OpenGLPipelineProvider glPipeline = 
-                    new stellar.snow.astralis.api.opengl.pipeline.OpenGLPipelineProvider();
-                openglPipeline.set(glPipeline);
-                logInit("  - OpenGL Pipeline Provider: INITIALIZED");
-            } catch (Exception e) {
-                LOGGER.warn("OpenGL Pipeline Provider initialization failed", e);
-            }
-            
-            // Initialize GLSL Pipeline Provider if GLSL is enabled
-            if (getCachedConfig("glslEnabled", Config::isGLSLEnabled)) {
-                try {
-                    stellar.snow.astralis.api.opengl.pipeline.GLSLPipelineProvider glslProvider = 
-                        new stellar.snow.astralis.api.opengl.pipeline.GLSLPipelineProvider();
-                    glslPipeline.set(glslProvider);
-                    logInit("  - GLSL Pipeline Provider: INITIALIZED (target: GLSL " + Config.getGLSLLanguageVersion() + ")");
+                logInit("  - Initializing OpenGL System (Manager + Pipelines + Mappers)...");
+                
+                // OpenGL Manager init() handles the entire initialization:
+                // 1. Initialize mappers (OpenGLCallMapper, GLSLCallMapper) as backend
+                // 2. Initialize pipeline providers (using mappers)
+                // 3. Set up state caching and management
+                boolean success = stellar.snow.astralis.api.opengl.managers.OpenGLManager.init(Config.INSTANCE);
+                
+                if (success) {
+                    stellar.snow.astralis.api.opengl.managers.OpenGLManager glManager = 
+                        stellar.snow.astralis.api.opengl.managers.OpenGLManager.getSafe();
+                    openglManager.set(glManager);
+                    
+                    // Pipelines are now accessible through the manager
+                    openglPipeline.set(glManager.getGLPipeline());
+                    glslPipeline.set(glManager.getGLSLPipeline());
+                    
+                    logInit("  - OpenGL Manager: INITIALIZED");
+                    logInit("    " + glManager.getConfigSummary());
+                    logInit("    • GL Version: detected=" + glManager.getDetectedGLVersion() + 
+                           ", effective=" + glManager.getEffectiveGLVersion());
+                    logInit("    • Pipeline: GLSL + GL through mappers (not MC render)");
+                    
+                    // Log capabilities
+                    if (glManager.isDSAAvailable()) {
+                        logInit("    • Direct State Access: AVAILABLE");
+                    }
+                    if (glManager.isPersistentMappingAvailable()) {
+                        logInit("    • Persistent Mapping: AVAILABLE");
+                    }
+                    if (glManager.isMultiDrawIndirectAvailable()) {
+                        logInit("    • Multi-Draw Indirect: AVAILABLE");
+                    }
                     
                     // Log modern features if supported
                     if (Config.isGLSLEnableComputeShaders() && glMajor >= 4 && glMinor >= 3) {
@@ -564,9 +573,11 @@ public final class InitializationManager {
                     if (stellar.snow.astralis.api.opengl.mapping.OpenGLCallMapper.hasFeatureMeshShading()) {
                         logInit("    • Mesh Shading: AVAILABLE (extension)");
                     }
-                } catch (Exception e) {
-                    LOGGER.warn("GLSL Pipeline Provider initialization failed", e);
+                } else {
+                    LOGGER.warn("OpenGL Manager initialization returned false, continuing without advanced features");
                 }
+            } catch (Exception e) {
+                LOGGER.warn("OpenGL Manager initialization failed, continuing with basic OpenGL", e);
             }
             
             logInit("  - Using OpenGL as primary backend");
