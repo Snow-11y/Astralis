@@ -29,6 +29,14 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+// Mixin imports for inner mixin classes
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.minecraft.client.Minecraft;/**
  * OpenGLManager
@@ -1623,20 +1631,18 @@ public final class OpenGLManager {
     /**
      * Mixin for EntityRenderer - hooks game rendering to route through GL pipeline.
      * 
-     * Target: net.minecraft.client.renderer.EntityRenderer
-     * 
-     * Usage in mixin JSON:
-     * "targets": ["net.minecraft.client.renderer.EntityRenderer"],
-     * "mixins": ["stellar.snow.astralis.api.opengl.managers.OpenGLManager$MixinGameRenderer"]
+     * Hooks into Minecraft's game renderer to ensure all GL calls go through our pipeline.
      */
+    @Mixin(net.minecraft.client.renderer.EntityRenderer.class)
     public static class MixinGameRenderer {
         private static OpenGLManager glManager;
         private static OpenGLPipelineProvider glPipeline;
         
         /**
-         * @Inject(method = "renderWorld", at = @At("HEAD"))
+         * Hook into renderWorld to ensure our pipeline is active.
          */
-        public static void onRenderWorldStart(float partialTicks, long finishTimeNano) {
+        @Inject(method = "renderWorld", at = @At("HEAD"))
+        private void onRenderWorldStart(float partialTicks, long finishTimeNano, CallbackInfo ci) {
             if (!OpenGLManager.isInitialized()) return;
             
             if (glManager == null) {
@@ -1649,18 +1655,20 @@ public final class OpenGLManager {
         }
         
         /**
-         * @Inject(method = "renderWorld", at = @At("RETURN"))
+         * Hook into renderWorld end to finalize pipeline state.
          */
-        public static void onRenderWorldEnd(float partialTicks, long finishTimeNano) {
+        @Inject(method = "renderWorld", at = @At("RETURN"))
+        private void onRenderWorldEnd(float partialTicks, long finishTimeNano, CallbackInfo ci) {
             if (glPipeline != null) {
                 glPipeline.endFrame();
             }
         }
         
         /**
-         * @Inject(method = "updateCameraAndRender", at = @At("HEAD"))
+         * Hook into updateCameraAndRender to ensure pipeline is ready.
          */
-        public static void onUpdateCameraAndRender(float partialTicks, long nanoTime) {
+        @Inject(method = "updateCameraAndRender", at = @At("HEAD"))
+        private void onUpdateCameraAndRender(float partialTicks, long nanoTime, CallbackInfo ci) {
             if (!OpenGLManager.isInitialized()) return;
             
             if (glManager == null) {
@@ -1673,21 +1681,19 @@ public final class OpenGLManager {
     /**
      * Mixin for ShaderManager - hooks GLSL operations to route through GLSL pipeline.
      * 
-     * Target: net.minecraft.client.shader.ShaderManager
-     * 
-     * Usage in mixin JSON:
-     * "targets": ["net.minecraft.client.shader.ShaderManager"],
-     * "mixins": ["stellar.snow.astralis.api.opengl.managers.OpenGLManager$MixinShaderManager"]
+     * Routes all shader compilation and linking through our GLSL pipeline system.
      */
+    @Mixin(net.minecraft.client.shader.ShaderManager.class)
     public static class MixinShaderManager {
         private static OpenGLManager glManager;
         private static GLSLPipelineProvider glslPipeline;
         private static GLSLCallMapper glslMapper;
         
         /**
-         * @Inject(method = "<init>", at = @At("RETURN"))
+         * Initialize our pipeline references when shader manager is created.
          */
-        public static void onInit() {
+        @Inject(method = "<init>", at = @At("RETURN"))
+        private void onInit(CallbackInfo ci) {
             if (OpenGLManager.isInitialized()) {
                 glManager = OpenGLManager.getSafe();
                 glslPipeline = glManager.getGLSLPipeline();
@@ -1696,64 +1702,62 @@ public final class OpenGLManager {
         }
         
         /**
-         * @Inject(method = "createShader", at = @At("HEAD"), cancellable = true)
-         * Returns compiled shader ID or -1 to let vanilla handle it
+         * Hook shader compilation to route through our GLSL pipeline.
          */
-        public static int onCreateShader(int shaderType, String name, String source) {
+        @Inject(method = "createShader", at = @At("HEAD"), cancellable = true)
+        private static void onCreateShader(int shaderType, String name, String source, 
+                                          CallbackInfoReturnable<Integer> cir) {
             if (!OpenGLManager.isInitialized() || glslPipeline == null) {
-                return -1; // Let vanilla handle
+                return;
             }
             
             try {
-                return glslPipeline.compileShader(shaderType, name, source);
+                int shaderId = glslPipeline.compileShader(shaderType, name, source);
+                cir.setReturnValue(shaderId);
             } catch (Exception e) {
                 System.err.println("[MixinShaderManager] Failed to compile shader: " + e.getMessage());
-                return -1; // Let vanilla handle
             }
         }
         
         /**
-         * @Inject(method = "linkProgram", at = @At("HEAD"), cancellable = true)
-         * Returns true if successful, false to let vanilla handle it
+         * Hook shader linking to route through our GLSL pipeline.
          */
-        public static boolean onLinkProgram(int program) {
+        @Inject(method = "linkProgram", at = @At("HEAD"), cancellable = true)
+        private static void onLinkProgram(int program, CallbackInfoReturnable<Boolean> cir) {
             if (!OpenGLManager.isInitialized() || glslPipeline == null) {
-                return false; // Let vanilla handle
+                return;
             }
             
             try {
-                return glslPipeline.linkProgram(program);
+                boolean success = glslPipeline.linkProgram(program);
+                cir.setReturnValue(success);
             } catch (Exception e) {
                 System.err.println("[MixinShaderManager] Failed to link program: " + e.getMessage());
-                return false; // Let vanilla handle
             }
         }
         
         /**
-         * @Inject(method = "getUniformLocation", at = @At("HEAD"), cancellable = true)
-         * Returns uniform location or -1 to let vanilla handle it
+         * Hook uniform location queries to use our cache.
          */
-        public static int onGetUniformLocation(int program, String name) {
+        @Inject(method = "getUniformLocation", at = @At("HEAD"), cancellable = true)
+        private void onGetUniformLocation(int program, String name, 
+                                          CallbackInfoReturnable<Integer> cir) {
             if (glslPipeline != null) {
                 try {
-                    return glslPipeline.getUniformLocation(program, name);
+                    int location = glslPipeline.getUniformLocation(program, name);
+                    cir.setReturnValue(location);
                 } catch (Exception ignored) {
-                    return -1; // Let vanilla handle
                 }
             }
-            return -1;
         }
     }
     
     /**
      * Mixin for GlStateManager - hooks all GL state changes to route through OpenGLManager.
      * 
-     * Target: net.minecraft.client.renderer.GlStateManager
-     * 
-     * Usage in mixin JSON:
-     * "targets": ["net.minecraft.client.renderer.GlStateManager"],
-     * "mixins": ["stellar.snow.astralis.api.opengl.managers.OpenGLManager$MixinGlStateManager"]
+     * Routes all GL state changes through our manager for caching and optimization.
      */
+    @Mixin(net.minecraft.client.renderer.GlStateManager.class)
     public static class MixinGlStateManager {
         private static OpenGLManager glManager;
         
@@ -1765,10 +1769,9 @@ public final class OpenGLManager {
         }
         
         // Buffer operations
-        /**
-         * @Redirect(method = "bindBuffer", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL15;glBindBuffer(II)V"))
-         */
-        public static void redirectBindBuffer(int target, int buffer) {
+        @Redirect(method = "bindBuffer", at = @At(value = "INVOKE", 
+                  target = "Lorg/lwjgl/opengl/GL15;glBindBuffer(II)V"))
+        private static void redirectBindBuffer(int target, int buffer) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.bindBuffer(target, buffer);
@@ -1778,10 +1781,9 @@ public final class OpenGLManager {
         }
         
         // Texture operations
-        /**
-         * @Redirect(method = "activeTexture", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL13;glActiveTexture(I)V"))
-         */
-        public static void redirectActiveTexture(int texture) {
+        @Redirect(method = "activeTexture", at = @At(value = "INVOKE",
+                  target = "Lorg/lwjgl/opengl/GL13;glActiveTexture(I)V"))
+        private static void redirectActiveTexture(int texture) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.activeTexture(texture);
@@ -1790,10 +1792,9 @@ public final class OpenGLManager {
             }
         }
         
-        /**
-         * @Redirect(method = "bindTexture", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glBindTexture(II)V"))
-         */
-        public static void redirectBindTexture(int target, int texture) {
+        @Redirect(method = "bindTexture", at = @At(value = "INVOKE",
+                  target = "Lorg/lwjgl/opengl/GL11;glBindTexture(II)V"))
+        private static void redirectBindTexture(int target, int texture) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.bindTexture(target, texture);
@@ -1803,11 +1804,9 @@ public final class OpenGLManager {
         }
         
         // Enable/Disable
-        /**
-         * @Redirect(method = "enableBlend|enableDepth|enableCull|enableScissor|enableStencil|enableAlpha", 
-         *           at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glEnable(I)V"))
-         */
-        public static void redirectEnable(int cap) {
+        @Redirect(method = "enableBlend", at = @At(value = "INVOKE", 
+                  target = "Lorg/lwjgl/opengl/GL11;glEnable(I)V"))
+        private static void redirectEnableBlend(int cap) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.enable(cap);
@@ -1816,11 +1815,9 @@ public final class OpenGLManager {
             }
         }
         
-        /**
-         * @Redirect(method = "disableBlend|disableDepth|disableCull|disableScissor|disableStencil|disableAlpha",
-         *           at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glDisable(I)V"))
-         */
-        public static void redirectDisable(int cap) {
+        @Redirect(method = "disableBlend", at = @At(value = "INVOKE",
+                  target = "Lorg/lwjgl/opengl/GL11;glDisable(I)V"))
+        private static void redirectDisableBlend(int cap) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.disable(cap);
@@ -1830,10 +1827,9 @@ public final class OpenGLManager {
         }
         
         // Depth operations
-        /**
-         * @Redirect(method = "depthMask", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glDepthMask(Z)V"))
-         */
-        public static void redirectDepthMask(boolean flag) {
+        @Redirect(method = "depthMask", at = @At(value = "INVOKE",
+                  target = "Lorg/lwjgl/opengl/GL11;glDepthMask(Z)V"))
+        private static void redirectDepthMask(boolean flag) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.depthMask(flag);
@@ -1842,10 +1838,9 @@ public final class OpenGLManager {
             }
         }
         
-        /**
-         * @Redirect(method = "depthFunc", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glDepthFunc(I)V"))
-         */
-        public static void redirectDepthFunc(int func) {
+        @Redirect(method = "depthFunc", at = @At(value = "INVOKE",
+                  target = "Lorg/lwjgl/opengl/GL11;glDepthFunc(I)V"))
+        private static void redirectDepthFunc(int func) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.depthFunc(func);
@@ -1855,10 +1850,9 @@ public final class OpenGLManager {
         }
         
         // Blend operations
-        /**
-         * @Redirect(method = "blendFunc", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL14;glBlendFunc(II)V"))
-         */
-        public static void redirectBlendFunc(int sfactor, int dfactor) {
+        @Redirect(method = "blendFunc", at = @At(value = "INVOKE",
+                  target = "Lorg/lwjgl/opengl/GL14;glBlendFunc(II)V"))
+        private static void redirectBlendFunc(int sfactor, int dfactor) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.blendFunc(sfactor, dfactor);
@@ -1867,10 +1861,9 @@ public final class OpenGLManager {
             }
         }
         
-        /**
-         * @Redirect(method = "blendFuncSeparate", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL14;glBlendFuncSeparate(IIII)V"))
-         */
-        public static void redirectBlendFuncSeparate(int srcRGB, int dstRGB, int srcA, int dstA) {
+        @Redirect(method = "blendFuncSeparate", at = @At(value = "INVOKE",
+                  target = "Lorg/lwjgl/opengl/GL14;glBlendFuncSeparate(IIII)V"))
+        private static void redirectBlendFuncSeparate(int srcRGB, int dstRGB, int srcA, int dstA) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.blendFuncSeparate(srcRGB, dstRGB, srcA, dstA);
@@ -1880,10 +1873,9 @@ public final class OpenGLManager {
         }
         
         // Program operations
-        /**
-         * @Redirect(method = "useProgram", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL20;glUseProgram(I)V"))
-         */
-        public static void redirectUseProgram(int program) {
+        @Redirect(method = "useProgram", at = @At(value = "INVOKE",
+                  target = "Lorg/lwjgl/opengl/GL20;glUseProgram(I)V"))
+        private static void redirectUseProgram(int program) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.useProgram(program);
@@ -1893,10 +1885,9 @@ public final class OpenGLManager {
         }
         
         // VAO operations
-        /**
-         * @Redirect(method = "bindVertexArray", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL30;glBindVertexArray(I)V"))
-         */
-        public static void redirectBindVertexArray(int vao) {
+        @Redirect(method = "bindVertexArray", at = @At(value = "INVOKE",
+                  target = "Lorg/lwjgl/opengl/GL30;glBindVertexArray(I)V"))
+        private static void redirectBindVertexArray(int vao) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.bindVertexArray(vao);
@@ -1906,10 +1897,9 @@ public final class OpenGLManager {
         }
         
         // Framebuffer operations
-        /**
-         * @Redirect(method = "bindFramebuffer", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL30;glBindFramebuffer(II)V"))
-         */
-        public static void redirectBindFramebuffer(int target, int framebuffer) {
+        @Redirect(method = "bindFramebuffer", at = @At(value = "INVOKE",
+                  target = "Lorg/lwjgl/opengl/GL30;glBindFramebuffer(II)V"))
+        private static void redirectBindFramebuffer(int target, int framebuffer) {
             OpenGLManager mgr = getManager();
             if (mgr != null) {
                 mgr.bindFramebuffer(target, framebuffer);
