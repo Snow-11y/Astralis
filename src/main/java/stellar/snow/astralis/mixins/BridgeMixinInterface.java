@@ -1,4 +1,4 @@
-package stellar.snow.astralis.bridge;
+package stellar.snow.astralis.mixins;
 
 import stellar.snow.astralis.engine.ecs.core.Entity;
 
