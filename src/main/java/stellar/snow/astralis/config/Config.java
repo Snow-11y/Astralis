@@ -414,6 +414,33 @@ public final class Config {
         // DirectX 10/11 specific settings
         defaults.put("directX11UseDeferred Context", true); // Use deferred contexts (DX11)
         defaults.put("directX11EnableMultithreading", true); // Multi-threaded command submission
+        
+        // DirectX Call Mapper Settings
+        defaults.put("directXCallMapperEnabled", true); // Enable DirectX call mapper (bridges DX9-12)
+        defaults.put("directXCallMapperValidateStates", false); // Validate all state changes (debug)
+        defaults.put("directXCallMapperCacheStates", true); // Cache and deduplicate state changes
+        defaults.put("directXCallMapperBatchCommands", true); // Batch API calls for performance
+        defaults.put("directXCallMapperUseUniformCache", true); // Cache shader uniforms (huge perf boost)
+        defaults.put("directXCallMapperLogCallCounts", false); // Log API call statistics
+        defaults.put("directXCallMapperProfileCalls", false); // Profile individual API calls
+        defaults.put("directXCallMapperErrorRecovery", true); // Enable graceful error recovery
+        defaults.put("directXCallMapperMaxConsecutiveErrors", 5); // Max errors before fallback
+        
+        // HLSL Call Mapper Settings (GLSL→HLSL Translation)
+        defaults.put("hlslCallMapperEnabled", true); // Enable HLSL call mapper
+        defaults.put("hlslCallMapperPreferAST", true); // Use AST-based translation (vs regex)
+        defaults.put("hlslCallMapperMatrixConvention", "PRAGMA_COLUMN_MAJOR"); // PRAGMA_COLUMN_MAJOR, CPU_TRANSPOSE, SHADER_TRANSPOSE, SWAP_MULTIPLY_ORDER
+        defaults.put("hlslCallMapperDefaultSampler", "LINEAR_WRAP"); // LINEAR_WRAP, LINEAR_CLAMP, POINT_WRAP, POINT_CLAMP, ANISOTROPIC
+        defaults.put("hlslCallMapperGenerateDebugComments", false); // Add debug comments to translated shaders
+        defaults.put("hlslCallMapperPreserveLineNumbers", false); // Preserve GLSL line numbers in HLSL
+        defaults.put("hlslCallMapperStrictMode", false); // Fail on unknown GLSL constructs
+        defaults.put("hlslCallMapperCacheTranslations", true); // Cache GLSL→HLSL translations
+        defaults.put("hlslCallMapperValidateOutput", true); // Validate translated HLSL before compile
+        defaults.put("hlslCallMapperLogTranslations", false); // Log all shader translations
+        defaults.put("hlslCallMapperMaxTextureSlots", 128); // DX9=16, DX11+=128
+        defaults.put("hlslCallMapperMaxSamplerSlots", 16); // Sampler state slots
+        defaults.put("hlslCallMapperMaxCBufferSlots", 14); // Constant buffer slots
+        defaults.put("hlslCallMapperMaxUAVSlots", 64); // UAV slots
 
         // OpenGL ES Specific Settings
         defaults.put("enableGLES", false); // Enable OpenGL ES support
@@ -2420,6 +2447,123 @@ public final class Config {
     public static boolean isDirectX9AllowMultithreading() {
         if (!initialized.get()) initialize();
         return getBoolean("directX9AllowMultithreading");
+    }
+    
+    // DirectX Call Mapper Settings
+    public static boolean isDirectXCallMapperEnabled() {
+        if (!initialized.get()) initialize();
+        return getBoolean("directXCallMapperEnabled");
+    }
+    
+    public static boolean isDirectXCallMapperValidateStates() {
+        if (!initialized.get()) initialize();
+        return getBoolean("directXCallMapperValidateStates");
+    }
+    
+    public static boolean isDirectXCallMapperCacheStates() {
+        if (!initialized.get()) initialize();
+        return getBoolean("directXCallMapperCacheStates");
+    }
+    
+    public static boolean isDirectXCallMapperBatchCommands() {
+        if (!initialized.get()) initialize();
+        return getBoolean("directXCallMapperBatchCommands");
+    }
+    
+    public static boolean isDirectXCallMapperUseUniformCache() {
+        if (!initialized.get()) initialize();
+        return getBoolean("directXCallMapperUseUniformCache");
+    }
+    
+    public static boolean isDirectXCallMapperLogCallCounts() {
+        if (!initialized.get()) initialize();
+        return getBoolean("directXCallMapperLogCallCounts");
+    }
+    
+    public static boolean isDirectXCallMapperProfileCalls() {
+        if (!initialized.get()) initialize();
+        return getBoolean("directXCallMapperProfileCalls");
+    }
+    
+    public static boolean isDirectXCallMapperErrorRecovery() {
+        if (!initialized.get()) initialize();
+        return getBoolean("directXCallMapperErrorRecovery");
+    }
+    
+    public static int getDirectXCallMapperMaxConsecutiveErrors() {
+        if (!initialized.get()) initialize();
+        return getInt("directXCallMapperMaxConsecutiveErrors");
+    }
+    
+    // HLSL Call Mapper Settings
+    public static boolean isHLSLCallMapperEnabled() {
+        if (!initialized.get()) initialize();
+        return getBoolean("hlslCallMapperEnabled");
+    }
+    
+    public static boolean isHLSLCallMapperPreferAST() {
+        if (!initialized.get()) initialize();
+        return getBoolean("hlslCallMapperPreferAST");
+    }
+    
+    public static String getHLSLCallMapperMatrixConvention() {
+        if (!initialized.get()) initialize();
+        return getString("hlslCallMapperMatrixConvention");
+    }
+    
+    public static String getHLSLCallMapperDefaultSampler() {
+        if (!initialized.get()) initialize();
+        return getString("hlslCallMapperDefaultSampler");
+    }
+    
+    public static boolean isHLSLCallMapperGenerateDebugComments() {
+        if (!initialized.get()) initialize();
+        return getBoolean("hlslCallMapperGenerateDebugComments");
+    }
+    
+    public static boolean isHLSLCallMapperPreserveLineNumbers() {
+        if (!initialized.get()) initialize();
+        return getBoolean("hlslCallMapperPreserveLineNumbers");
+    }
+    
+    public static boolean isHLSLCallMapperStrictMode() {
+        if (!initialized.get()) initialize();
+        return getBoolean("hlslCallMapperStrictMode");
+    }
+    
+    public static boolean isHLSLCallMapperCacheTranslations() {
+        if (!initialized.get()) initialize();
+        return getBoolean("hlslCallMapperCacheTranslations");
+    }
+    
+    public static boolean isHLSLCallMapperValidateOutput() {
+        if (!initialized.get()) initialize();
+        return getBoolean("hlslCallMapperValidateOutput");
+    }
+    
+    public static boolean isHLSLCallMapperLogTranslations() {
+        if (!initialized.get()) initialize();
+        return getBoolean("hlslCallMapperLogTranslations");
+    }
+    
+    public static int getHLSLCallMapperMaxTextureSlots() {
+        if (!initialized.get()) initialize();
+        return getInt("hlslCallMapperMaxTextureSlots");
+    }
+    
+    public static int getHLSLCallMapperMaxSamplerSlots() {
+        if (!initialized.get()) initialize();
+        return getInt("hlslCallMapperMaxSamplerSlots");
+    }
+    
+    public static int getHLSLCallMapperMaxCBufferSlots() {
+        if (!initialized.get()) initialize();
+        return getInt("hlslCallMapperMaxCBufferSlots");
+    }
+    
+    public static int getHLSLCallMapperMaxUAVSlots() {
+        if (!initialized.get()) initialize();
+        return getInt("hlslCallMapperMaxUAVSlots");
     }
 
     // DirectX 10/11 specific settings
