@@ -109,6 +109,9 @@ public final class InitializationManager {
     private static final AtomicReference<VulkanManager> vulkanManager = new AtomicReference<>();
     private static final AtomicReference<DirectXManager> directXManager = new AtomicReference<>();
     private static final AtomicReference<DirectXPipelineProvider> directXPipeline = new AtomicReference<>();
+    private static final AtomicReference<stellar.snow.astralis.api.directx.mapping.DirectXCallMapper> directXCallMapper = new AtomicReference<>();
+    private static final AtomicReference<stellar.snow.astralis.api.directx.mapping.HLSLCallMapper> hlslCallMapper = new AtomicReference<>();
+    private static final AtomicReference<stellar.snow.astralis.api.directx.pipeline.HLSLPipelineProvider> hlslPipeline = new AtomicReference<>();
     private static final AtomicReference<stellar.snow.astralis.api.metal.managers.MetalManager> metalManager = new AtomicReference<>();
     private static final AtomicReference<stellar.snow.astralis.api.metal.pipeline.MetalPipelineProvider> metalPipeline = new AtomicReference<>();
     private static final AtomicReference<stellar.snow.astralis.api.metal.pipeline.MSLPipelineProvider> mslPipeline = new AtomicReference<>();
@@ -957,6 +960,40 @@ public final class InitializationManager {
                 // Initialize DirectX pipeline provider
                 DirectXPipelineProvider dxPipeline = DirectXPipelineProvider.getInstance(dxManager);
                 directXPipeline.set(dxPipeline);
+                
+                // Initialize DirectXCallMapper with manager integration
+                try {
+                    stellar.snow.astralis.api.directx.mapping.DirectXCallMapper dxMapper = 
+                        new stellar.snow.astralis.api.directx.mapping.DirectXCallMapper(dxManager);
+                    directXCallMapper.set(dxMapper);
+                    logInit("    ✓ DirectXCallMapper initialized (integrated with DirectXManager)");
+                } catch (Exception e) {
+                    LOGGER.warn("DirectXCallMapper initialization failed", e);
+                }
+                
+                // Initialize HLSLCallMapper (GLSL to HLSL translation)
+                if (Config.isHLSLEnabled() && UniversalCapabilities.HLSL.isAvailable) {
+                    try {
+                        stellar.snow.astralis.api.directx.mapping.HLSLCallMapper hlslMapper = 
+                            new stellar.snow.astralis.api.directx.mapping.HLSLCallMapper();
+                        hlslCallMapper.set(hlslMapper);
+                        logInit("    ✓ HLSLCallMapper initialized (GLSL→HLSL translation)");
+                        logInit("      • Target Shader Model: " + Config.getHLSLShaderModel());
+                        logInit("      • Compiler: " + Config.getHLSLCompiler());
+                    } catch (Exception e) {
+                        LOGGER.warn("HLSLCallMapper initialization failed", e);
+                    }
+                    
+                    // Initialize HLSL Pipeline Provider
+                    try {
+                        stellar.snow.astralis.api.directx.pipeline.HLSLPipelineProvider hlslPipeProvider = 
+                            new stellar.snow.astralis.api.directx.pipeline.HLSLPipelineProvider(dxManager);
+                        hlslPipeline.set(hlslPipeProvider);
+                        logInit("    ✓ HLSLPipelineProvider initialized");
+                    } catch (Exception e) {
+                        LOGGER.warn("HLSLPipelineProvider initialization failed", e);
+                    }
+                }
                 
                 // Log success details
                 logInit("    ✓ DirectX Manager created");
