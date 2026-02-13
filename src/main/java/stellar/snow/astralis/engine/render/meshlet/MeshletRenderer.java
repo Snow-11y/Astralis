@@ -1,4 +1,4 @@
-package stellar.snow.astralis.api.vulkan.meshlet;
+package stellar.snow.astralis.engine.render.meshlet;
 
 import stellar.snow.astralis.engine.gpu.authority.GPUBackend;
 import stellar.snow.astralis.engine.gpu.authority.GPUBackendSelector;

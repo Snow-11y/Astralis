@@ -1,4 +1,4 @@
-package stellar.snow.astralis.api.vulkan.shaders;
+package stellar.snow.astralis.api.shaders;
 
 import stellar.snow.astralis.engine.gpu.authority.GPUBackend;
 import stellar.snow.astralis.engine.gpu.authority.GPUBackendSelector;

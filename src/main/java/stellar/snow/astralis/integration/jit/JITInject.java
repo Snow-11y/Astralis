@@ -50,7 +50,7 @@ import stellar.snow.astralis.engine.render.graph.RenderGraph;
 import stellar.snow.astralis.engine.render.graph.RenderPassNode;
 import stellar.snow.astralis.engine.render.graph.ResourceNode;
 import stellar.snow.astralis.engine.render.resolution.ResolutionManager;
-import stellar.snow.astralis.api.vulkan.shaders.ShaderPermutationManager;
+import stellar.snow.astralis.api.shaders.ShaderPermutationManager;
 
 import stellar.snow.astralis.platform.mixins.accessor.IMinecraftAccessor;
 import stellar.snow.astralis.platform.mixins.accessor.IWorldAccessor;
