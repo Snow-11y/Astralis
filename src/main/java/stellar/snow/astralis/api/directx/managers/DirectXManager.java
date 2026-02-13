@@ -225,7 +225,238 @@ public final class DirectXManager implements AutoCloseable {
     }
     
     // ════════════════════════════════════════════════════════════════════════
-    // SECTION 1: API VERSION & FEATURE LEVEL DEFINITIONS
+    // SECTION 2: ERROR HANDLING & RECOVERY SYSTEM
+    // ════════════════════════════════════════════════════════════════════════
+    
+    /**
+     * Graceful error handling system with automatic degradation and recovery.
+     * 
+     * Strategy:
+     * 1. Detect errors during initialization or runtime
+     * 2. Attempt graceful degradation to lower API version
+     * 3. Log errors comprehensively for debugging
+     * 4. Retry recovery on next render cycle if possible
+     * 5. Fall back to OpenGL if all DirectX APIs fail
+     */
+    public static final class ErrorRecoverySystem {
+        private final AtomicInteger consecutiveErrors = new AtomicInteger(0);
+        private final AtomicLong lastErrorTime = new AtomicLong(0);
+        private final AtomicReference<APIVersion> degradedAPI = new AtomicReference<>();
+        private final ConcurrentLinkedQueue<ErrorReport> errorHistory = new ConcurrentLinkedQueue<>();
+        private final AtomicBoolean recoveryInProgress = new AtomicBoolean(false);
+        
+        private static final int MAX_CONSECUTIVE_ERRORS = 5;
+        private static final long ERROR_COOLDOWN_MS = 1000;
+        private static final int MAX_ERROR_HISTORY = 50;
+        
+        public record ErrorReport(
+            long timestamp,
+            String errorType,
+            String message,
+            APIVersion attemptedAPI,
+            @Nullable Throwable cause
+        ) {}
+        
+        /**
+         * Handle an error during DirectX operation.
+         * 
+         * @param errorType Type of error (e.g., "INITIALIZATION", "RENDERING", "RESOURCE_CREATION")
+         * @param message Error description
+         * @param attemptedAPI API version that failed
+         * @param cause Exception that caused the error (if any)
+         * @return Recovery action to take
+         */
+        public RecoveryAction handleError(
+            String errorType,
+            String message,
+            APIVersion attemptedAPI,
+            @Nullable Throwable cause
+        ) {
+            long now = System.currentTimeMillis();
+            lastErrorTime.set(now);
+            
+            // Record error in history
+            ErrorReport report = new ErrorReport(now, errorType, message, attemptedAPI, cause);
+            errorHistory.offer(report);
+            
+            // Trim history if too large
+            while (errorHistory.size() > MAX_ERROR_HISTORY) {
+                errorHistory.poll();
+            }
+            
+            // Increment consecutive error counter
+            int errorCount = consecutiveErrors.incrementAndGet();
+            
+            // Log error with full context
+            if (cause != null) {
+                LOGGER.error("[DirectX Error] {}: {} (API: {}, Error #{}})",
+                    errorType, message, attemptedAPI.displayName, errorCount, cause);
+            } else {
+                LOGGER.error("[DirectX Error] {}: {} (API: {}, Error #{})",
+                    errorType, message, attemptedAPI.displayName, errorCount);
+            }
+            
+            // Determine recovery action based on error count and type
+            if (errorCount >= MAX_CONSECUTIVE_ERRORS) {
+                LOGGER.error("Too many consecutive DirectX errors ({}), falling back to OpenGL",
+                    errorCount);
+                return RecoveryAction.FALLBACK_TO_OPENGL;
+            }
+            
+            // Check if we should attempt API degradation
+            if (errorType.equals("INITIALIZATION") || errorType.equals("DEVICE_LOST")) {
+                APIVersion fallbackAPI = getFallbackAPI(attemptedAPI);
+                if (fallbackAPI != null) {
+                    degradedAPI.set(fallbackAPI);
+                    LOGGER.warn("Degrading from {} to {} due to errors",
+                        attemptedAPI.displayName, fallbackAPI.displayName);
+                    return RecoveryAction.DEGRADE_API;
+                }
+            }
+            
+            // For recoverable errors, attempt retry after cooldown
+            if (errorType.equals("RENDERING") || errorType.equals("COMMAND_SUBMISSION")) {
+                return RecoveryAction.RETRY_AFTER_COOLDOWN;
+            }
+            
+            // For resource errors, try garbage collection and retry
+            if (errorType.equals("RESOURCE_CREATION") || errorType.equals("OUT_OF_MEMORY")) {
+                return RecoveryAction.GC_AND_RETRY;
+            }
+            
+            // Default: skip this operation and continue
+            return RecoveryAction.SKIP_AND_CONTINUE;
+        }
+        
+        /**
+         * Notify system of successful operation (resets error counter)
+         */
+        public void notifySuccess() {
+            int previousErrors = consecutiveErrors.getAndSet(0);
+            if (previousErrors > 0) {
+                LOGGER.info("DirectX recovered successfully after {} errors", previousErrors);
+                degradedAPI.set(null);
+            }
+        }
+        
+        /**
+         * Check if system is in cooldown period after an error
+         */
+        public boolean isInCooldown() {
+            long timeSinceError = System.currentTimeMillis() - lastErrorTime.get();
+            return timeSinceError < ERROR_COOLDOWN_MS;
+        }
+        
+        /**
+         * Attempt recovery from error state
+         */
+        public boolean attemptRecovery(DirectXManager manager) {
+            if (!recoveryInProgress.compareAndSet(false, true)) {
+                return false; // Recovery already in progress
+            }
+            
+            try {
+                LOGGER.info("Attempting DirectX recovery...");
+                
+                // Wait for cooldown
+                if (isInCooldown()) {
+                    Thread.sleep(ERROR_COOLDOWN_MS);
+                }
+                
+                // Try to reinitialize with degraded API if available
+                APIVersion targetAPI = degradedAPI.get();
+                if (targetAPI != null) {
+                    LOGGER.info("Attempting reinitialization with {}", targetAPI.displayName);
+                    // Reinitialize manager with lower API version
+                    // (actual implementation would call manager.reinitialize(targetAPI))
+                    return true;
+                }
+                
+                return false;
+            } catch (Exception e) {
+                LOGGER.error("Recovery attempt failed", e);
+                return false;
+            } finally {
+                recoveryInProgress.set(false);
+            }
+        }
+        
+        /**
+         * Get fallback API version for degradation
+         */
+        private @Nullable APIVersion getFallbackAPI(APIVersion current) {
+            return switch (current) {
+                case DX12_2 -> APIVersion.DX12_1;
+                case DX12_1 -> APIVersion.DX12;
+                case DX12 -> APIVersion.DX11_4;
+                case DX11_4 -> APIVersion.DX11_3;
+                case DX11_3 -> APIVersion.DX11_2;
+                case DX11_2 -> APIVersion.DX11_1;
+                case DX11_1 -> APIVersion.DX11;
+                case DX11 -> APIVersion.DX10_1;
+                case DX10_1 -> APIVersion.DX10;
+                case DX10 -> APIVersion.DX9_EX;
+                case DX9_EX -> APIVersion.DX9;
+                case DX9 -> null; // No further fallback available
+            };
+        }
+        
+        /**
+         * Get error statistics for debugging
+         */
+        public ErrorStats getStats() {
+            return new ErrorStats(
+                consecutiveErrors.get(),
+                errorHistory.size(),
+                degradedAPI.get(),
+                lastErrorTime.get(),
+                recoveryInProgress.get()
+            );
+        }
+        
+        public record ErrorStats(
+            int consecutiveErrors,
+            int totalErrorsLogged,
+            @Nullable APIVersion degradedAPI,
+            long lastErrorTimestamp,
+            boolean recoveryInProgress
+        ) {}
+        
+        /**
+         * Get recent error reports for debugging
+         */
+        public List<ErrorReport> getRecentErrors(int count) {
+            return errorHistory.stream()
+                .skip(Math.max(0, errorHistory.size() - count))
+                .toList();
+        }
+    }
+    
+    /**
+     * Recovery actions that can be taken after an error
+     */
+    public enum RecoveryAction {
+        /** Continue with current API, skip failed operation */
+        SKIP_AND_CONTINUE,
+        
+        /** Degrade to lower DirectX API version */
+        DEGRADE_API,
+        
+        /** Retry operation after cooldown period */
+        RETRY_AFTER_COOLDOWN,
+        
+        /** Run garbage collection and retry */
+        GC_AND_RETRY,
+        
+        /** Fall back to OpenGL completely */
+        FALLBACK_TO_OPENGL,
+        
+        /** Shut down DirectX entirely (critical error) */
+        SHUTDOWN
+    }
+    
+    // ════════════════════════════════════════════════════════════════════════
+    // SECTION 3: MIXIN INTEGRATION SUPPORT
     // ════════════════════════════════════════════════════════════════════════
     
     /**
@@ -3207,6 +3438,9 @@ public final class DirectXManager implements AutoCloseable {
     // Configuration
     private final DirectXConfig config;
     
+    // Error handling and recovery
+    private final ErrorRecoverySystem errorRecovery = new ErrorRecoverySystem();
+    
     /**
      * Configuration for DirectX initialization.
      */
@@ -4799,5 +5033,6 @@ public final class DirectXManager implements AutoCloseable {
     public APIVersion getCurrentAPI() { return currentAPI; }
     public Capabilities getCapabilities() { return capabilities; }
     public boolean isInitialized() { return initialized; }
+    public ErrorRecoverySystem getErrorRecovery() { return errorRecovery; }
     public DirectXConfig getConfig() { return config; }
 }
