@@ -1,7 +1,6 @@
 package stellar.snow.astralis.api.shaders;
 
 import stellar.snow.astralis.api.shaders.ShaderPermutationManager;
-import stellar.snow.astralis.api.shaders.ShaderPermutationManager.*;
 import stellar.snow.astralis.engine.gpu.authority.GPUBackend;
 
 import java.nio.file.*;
