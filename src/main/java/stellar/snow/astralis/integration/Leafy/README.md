@@ -256,6 +256,7 @@ Typical performance on modern hardware:
     </dependency>
 </dependencies>
 ```
+(heheh~:> instead of forgetting, i'll doc requirements for each thing as READMEs)
 
 ### JVM Flags
 
