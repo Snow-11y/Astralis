@@ -18,6 +18,8 @@
     "api.vulkan.backend.MinecraftVulkanBackend$MixinRenderGlobal",
     "api.vulkan.backend.MinecraftVulkanBackend$MixinTessellator",
     "api.vulkan.backend.MinecraftVulkanBackend$MixinWorldRenderer",
+    "MixinGameRenderer",
+    "MixinWorldRenderer",
     "integration.ChunkMotion.ChunkAnimator$MixinRenderChunk",
     "integration.ChunkMotion.ChunkAnimator$MixinRenderGlobal",
     "integration.GoodOptimizations.GoodOptimization$MixinEntityRender",
