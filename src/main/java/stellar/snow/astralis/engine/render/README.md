@@ -363,6 +363,8 @@ validator.checkNotNull(object, "object");
 3. **Predictability:** Kirino's FSM is obviously correct
    - **Our solution:** Stability validator catches bugs
 
+> [!IMPORTANT]
+> the comparison to kirino Will ne replaced with other mods once the mod's upgrade to fabric and newer MC!
 ### What We Do Better
 
 1. **Performance:** 10-100x faster resource access
