@@ -1,14 +1,11 @@
 package stellar.snow.astralis.engine.render.debug;
-
 import stellar.snow.astralis.engine.gpu.compute.CullingManager;
 import stellar.snow.astralis.engine.gpu.compute.IndirectDrawManager;
 import stellar.snow.astralis.engine.render.gpudriven.CullingSystem;
 import stellar.snow.astralis.engine.render.gpudriven.IndirectDrawBridge;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
-
 /**
  * Human-Centric Debug System
  * 
@@ -23,7 +20,6 @@ import java.util.function.*;
  * This is what Kirino does well - making the engine debuggable by humans.
  * We take that concept and make it 10x better.
  */
-public final class DeveloperDebugSystem {
     
     // ════════════════════════════════════════════════════════════════════════
     // CORE SYSTEMS INTEGRATION

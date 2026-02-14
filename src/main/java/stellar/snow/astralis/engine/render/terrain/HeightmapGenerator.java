@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.terrain;
-public final class HeightmapGenerator {
     public static float[][] generatePerlin(int width, int height, float scale, int octaves) {
         float[][] heightmap = new float[width][height];
         for (int y = 0; y < height; y++) {

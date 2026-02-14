@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.neural;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                                ██
@@ -14,15 +13,12 @@ package stellar.snow.astralis.engine.render.neural;
 // ██    Version: 8.0.0 | Machine Learning Upscaling | Real-Time Neural Reconstruction            ██
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import jdk.incubator.vector.*;
-
 import static java.lang.foreign.ValueLayout.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                                  NEURAL RENDERING SYSTEM                                          ║
@@ -55,7 +51,6 @@ import static java.lang.foreign.ValueLayout.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public class NeuralRenderingSystem {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // UPSCALING TECHNOLOGIES

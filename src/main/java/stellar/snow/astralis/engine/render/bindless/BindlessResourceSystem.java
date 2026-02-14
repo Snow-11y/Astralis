@@ -1,14 +1,11 @@
 package stellar.snow.astralis.engine.render.bindless;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // BINDLESS RESOURCE SYSTEM - Modern Descriptor Management
 // Version: 6.0.0 | Descriptor Indexing | Unbounded Arrays | GPU-Driven Material Selection
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.util.*;
 import java.util.concurrent.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                              BINDLESS RESOURCES SYSTEM                                            ║
@@ -32,7 +29,6 @@ import java.util.concurrent.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public class BindlessResourceSystem {
     
     public enum ResourceType {
         TEXTURE_2D,

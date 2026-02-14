@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.raytracing;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                                ██
@@ -14,7 +13,6 @@ package stellar.snow.astralis.engine.render.raytracing;
 // ██    Version: 6.0.0-EXTREME | Real-Time Path Tracing & Hybrid Rendering                       ██
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.nio.*;
@@ -22,9 +20,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import jdk.incubator.vector.*;
-
 import static java.lang.foreign.ValueLayout.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                                   HARDWARE RAY TRACING SYSTEM                                     ║
@@ -58,7 +54,6 @@ import static java.lang.foreign.ValueLayout.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public class RayTracingSystem {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // ACCELERATION STRUCTURE TYPES

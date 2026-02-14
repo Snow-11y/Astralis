@@ -1,13 +1,11 @@
 package stellar.snow.astralis.engine.render.vrs;
-
 import org.lwjgl.vulkan.*;
+import static org.lwjgl.vulkan.VK.*;
 import java.nio.*;
-
 /**
  * Shading Rate Image generator for Variable Rate Shading
  * Creates texture that controls per-tile shading rates
  */
-public final class ShadingRateMap {
     
     private long shadingRateImage;
     private long device;
@@ -35,17 +33,17 @@ public final class ShadingRateMap {
         int vrsHeight = (height + tileSize - 1) / tileSize;
         
         VkImageCreateInfo imageInfo = VkImageCreateInfo.calloc()
-            .sType(VK12.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
-            .imageType(VK12.VK_IMAGE_TYPE_2D)
-            .format(VK12.VK_FORMAT_R8_UINT)  // 8-bit per tile
+            .sType(VK.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
+            .imageType(VK.VK_IMAGE_TYPE_2D)
+            .format(VK.VK_FORMAT_R8_UINT)  // 8-bit per tile
             .mipLevels(1)
             .arrayLayers(1)
-            .samples(VK12.VK_SAMPLE_COUNT_1_BIT)
-            .tiling(VK12.VK_IMAGE_TILING_OPTIMAL)
-            .usage(VK12.VK_IMAGE_USAGE_STORAGE_BIT | 
-                   VK12.VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR)
-            .sharingMode(VK12.VK_SHARING_MODE_EXCLUSIVE)
-            .initialLayout(VK12.VK_IMAGE_LAYOUT_UNDEFINED);
+            .samples(VK.VK_SAMPLE_COUNT_1_BIT)
+            .tiling(VK.VK_IMAGE_TILING_OPTIMAL)
+            .usage(VK.VK_IMAGE_USAGE_STORAGE_BIT | 
+                   VK.VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR)
+            .sharingMode(VK.VK_SHARING_MODE_EXCLUSIVE)
+            .initialLayout(VK.VK_IMAGE_LAYOUT_UNDEFINED);
         
         imageInfo.extent().width(vrsWidth).height(vrsHeight).depth(1);
         
@@ -56,7 +54,6 @@ public final class ShadingRateMap {
         // Compute shader for VRS map generation
         
         String shaderCode = """
-            #version 460
             #extension GL_KHR_shader_subgroup_basic : enable
             
             layout(local_size_x = 8, local_size_y = 8) in;

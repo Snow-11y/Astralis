@@ -1,8 +1,6 @@
 package stellar.snow.astralis.engine.render.meshlet;
-
 import java.nio.ByteBuffer;
 import java.util.Objects;
-
 /**
  * MeshletData - Represents a cluster of geometry optimized for GPU mesh shading.
  * 
@@ -37,7 +35,6 @@ import java.util.Objects;
  *   <li>Nanite-style virtualized geometry concepts</li>
  * </ul>
  */
-public final class MeshletData {
     
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTANTS

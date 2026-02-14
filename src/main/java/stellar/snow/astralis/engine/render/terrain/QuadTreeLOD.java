@@ -1,6 +1,5 @@
 package stellar.snow.astralis.engine.render.terrain;
 import org.joml.*;
-public final class QuadTreeLOD {
     public static class QuadNode {
         Vector2f center;
         float size;

@@ -1,6 +1,4 @@
 package stellar.snow.astralis.engine.render.postprocessing;
-
-public final class MobilePostProcessOptimizer {
     public static void optimizeForMali(PostProcessingSystem system) {
         system.config.bloomMipLevels = 5;
         system.config.ssrMaxSteps = 32;

@@ -1,11 +1,9 @@
 package stellar.snow.astralis.engine.render.gpudriven;
-
 import stellar.snow.astralis.engine.gpu.compute.CullingManager;
 import stellar.snow.astralis.engine.gpu.compute.CullingTier;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
 import org.joml.*;
-
 /**
  * GPU-driven culling integration wrapper.
  * 
@@ -18,7 +16,6 @@ import org.joml.*;
  * 
  * This wrapper adapts the rendering system to use those capabilities.
  */
-public final class CullingSystem {
     
     private final CullingManager cullingManager;
     

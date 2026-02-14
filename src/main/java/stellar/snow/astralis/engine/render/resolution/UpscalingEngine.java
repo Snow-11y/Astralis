@@ -1,13 +1,11 @@
 package stellar.snow.astralis.engine.render.resolution;
-
 import org.lwjgl.vulkan.*;
+import static org.lwjgl.vulkan.VK.*;
 import java.nio.*;
-
 /**
  * Universal upscaling engine supporting multiple algorithms
  * Supports: Nearest, Bilinear, FSR 2.0, DLSS, XeSS
  */
-public final class UpscalingEngine {
     
     public enum Mode {
         NEAREST("Nearest Neighbor - Fastest, lowest quality"),
@@ -89,7 +87,6 @@ public final class UpscalingEngine {
         createHistoryBuffer(width, height);
         
         String fsr2Shader = """
-            #version 460
             
             layout(local_size_x = 8, local_size_y = 8) in;
             
@@ -156,15 +153,15 @@ public final class UpscalingEngine {
     
     private void createHistoryBuffer(int width, int height) {
         VkImageCreateInfo imageInfo = VkImageCreateInfo.calloc()
-            .sType(VK12.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
-            .imageType(VK12.VK_IMAGE_TYPE_2D)
-            .format(VK12.VK_FORMAT_R16G16B16A16_SFLOAT)
+            .sType(VK.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
+            .imageType(VK.VK_IMAGE_TYPE_2D)
+            .format(VK.VK_FORMAT_R16G16B16A16_SFLOAT)
             .mipLevels(1)
             .arrayLayers(1)
-            .samples(VK12.VK_SAMPLE_COUNT_1_BIT)
-            .tiling(VK12.VK_IMAGE_TILING_OPTIMAL)
-            .usage(VK12.VK_IMAGE_USAGE_STORAGE_BIT | VK12.VK_IMAGE_USAGE_SAMPLED_BIT)
-            .sharingMode(VK12.VK_SHARING_MODE_EXCLUSIVE);
+            .samples(VK.VK_SAMPLE_COUNT_1_BIT)
+            .tiling(VK.VK_IMAGE_TILING_OPTIMAL)
+            .usage(VK.VK_IMAGE_USAGE_STORAGE_BIT | VK.VK_IMAGE_USAGE_SAMPLED_BIT)
+            .sharingMode(VK.VK_SHARING_MODE_EXCLUSIVE);
         
         imageInfo.extent().width(width).height(height).depth(1);
         

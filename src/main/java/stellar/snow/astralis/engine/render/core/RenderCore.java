@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.core;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                                ██
@@ -15,7 +14,6 @@ package stellar.snow.astralis.engine.render.core;
 // ██    Project Loom + Valhalla + Panama + Lilliput + Vector API                                 ██
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.lang.invoke.*;
 import java.lang.ref.*;
@@ -29,12 +27,9 @@ import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
 import java.util.function.*;
 import java.util.stream.*;
-
 import jdk.incubator.vector.*;
-
 import static java.lang.foreign.ValueLayout.*;
 import static java.lang.foreign.MemoryLayout.*;
-
 import stellar.snow.astralis.engine.render.meshlet.*;
 import stellar.snow.astralis.engine.render.raytracing.*;
 import stellar.snow.astralis.engine.render.virtualgeometry.*;
@@ -46,7 +41,6 @@ import stellar.snow.astralis.engine.render.shader.*;
 import stellar.snow.astralis.engine.render.material.*;
 import stellar.snow.astralis.engine.render.terrain.*;
 import stellar.snow.astralis.engine.render.texture.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                          
@@ -125,7 +119,6 @@ import stellar.snow.astralis.engine.render.texture.*;
  * @since Java 25
  */
 @SuppressWarnings({"preview", "incubator", "restricted"})
-public final class RenderCore implements AutoCloseable {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // ██ SECTION 1: CONSTANTS & CONFIGURATION

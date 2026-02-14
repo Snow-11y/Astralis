@@ -1,11 +1,9 @@
 package stellar.snow.astralis.engine.render.shader;
-
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.regex.*;
-
 /**
  * DependencyGraph - Shader Include Dependency Tracking
  * 
@@ -21,7 +19,6 @@ import java.util.regex.*;
  * - Dependency visualization
  * - Cache invalidation
  */
-public final class DependencyGraph {
     
     /**
      * Shader file node in the dependency graph

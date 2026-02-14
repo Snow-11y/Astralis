@@ -1,17 +1,13 @@
 package stellar.snow.astralis.engine.render.bindless;
-
 import org.lwjgl.vulkan.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * BindlessBufferManager - Bindless Buffer Management
  * 
  * Similar to texture manager but for storage buffers.
  * Allows shaders to access arbitrary buffers via indices.
  */
-public final class BindlessBufferManager implements AutoCloseable {
     
     private static final int MAX_BUFFERS = 10000;
     

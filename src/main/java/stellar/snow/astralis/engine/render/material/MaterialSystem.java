@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.material;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ██████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                              ██
@@ -16,11 +15,9 @@ package stellar.snow.astralis.engine.render.material;
 // ██                                                                                              ██
 // ██████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
-
 import java.lang.foreign.*;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -34,11 +31,8 @@ import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
 import java.util.function.*;
 import java.util.stream.Collectors;
-
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * MaterialSystem - Advanced material management with graph-based workflows.
  * 
@@ -81,7 +75,6 @@ import static org.lwjgl.vulkan.VK10.*;
  * @author Stellar Snow Engine Team
  * @version 4.0.0
  */
-public final class MaterialSystem implements AutoCloseable {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // CONSTANTS
@@ -556,7 +549,6 @@ public final class MaterialSystem implements AutoCloseable {
             
             // Add header
             shader.append("""
-                #version 450
                 #extension GL_EXT_nonuniform_qualifier : enable
                 
                 layout(set = 0, binding = 0) uniform sampler2D textures[];

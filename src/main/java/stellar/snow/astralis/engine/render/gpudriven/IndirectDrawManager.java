@@ -1,9 +1,7 @@
 package stellar.snow.astralis.engine.render.gpudriven;
-
 import stellar.snow.astralis.engine.gpu.compute.IndirectDrawManager;
 import stellar.snow.astralis.engine.gpu.authority.GPUBackend;
 import stellar.snow.astralis.engine.gpu.authority.GPUBackendSelector;
-
 /**
  * GPU-driven indirect draw integration wrapper.
  * 
@@ -18,7 +16,6 @@ import stellar.snow.astralis.engine.gpu.authority.GPUBackendSelector;
  * 
  * This wrapper adapts the rendering system to use those capabilities.
  */
-public final class IndirectDrawBridge {
     
     private final IndirectDrawManager drawManager;
     private final GPUBackend backend;

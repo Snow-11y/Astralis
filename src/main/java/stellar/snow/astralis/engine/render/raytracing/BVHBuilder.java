@@ -1,13 +1,10 @@
 package stellar.snow.astralis.engine.render.raytracing;
-
 import org.joml.*;
 import java.util.*;
-
 /**
  * Bounding Volume Hierarchy builder for ray tracing acceleration
  * Uses Surface Area Heuristic (SAH) for optimal tree construction
  */
-public final class BVHBuilder {
     
     public static class BVHNode {
         Vector3f aabbMin, aabbMax;

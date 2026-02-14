@@ -1,13 +1,10 @@
 package stellar.snow.astralis.engine.render.workgraphs;
-
 import java.util.*;
-
 /**
  * GPU Work Graphs node graph structure
  * Represents dependencies between GPU compute tasks for dynamic dispatch
  * Based on DX12 Work Graphs (GPU-driven task parallelism)
  */
-public final class NodeGraph {
     
     public static class Node {
         String name;

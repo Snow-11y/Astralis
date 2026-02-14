@@ -1,7 +1,5 @@
 package stellar.snow.astralis.engine.render.meshlet;
-
 import java.util.*;
-
 /**
  * MeshletBuilder - Utility for building meshlets from triangle mesh data.
  * 
@@ -13,7 +11,6 @@ import java.util.*;
  *   <li>LOD hierarchy construction</li>
  * </ul>
  */
-public final class MeshletBuilder {
     
     private final int maxVertices;
     private final int maxTriangles;

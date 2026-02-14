@@ -1,10 +1,8 @@
 package stellar.snow.astralis.engine.render.vrs;
-
 /**
  * Adaptive shading rate calculation for Variable Rate Shading
  * Determines optimal shading rate based on visual perception factors
  */
-public final class AdaptiveShadingRate {
     
     // VRS rates (Vulkan/DX12)
     public static final int RATE_1X1 = 0;  // Full resolution

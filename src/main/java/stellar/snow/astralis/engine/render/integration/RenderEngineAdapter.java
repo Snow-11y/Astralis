@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.integration;
-public final class RenderEngineAdapter {
     public interface GraphicsAPI {
         void initialize();
         long createTexture(int width, int height, int format);

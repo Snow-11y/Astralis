@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.shader;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ██████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                              ██
@@ -16,7 +15,6 @@ package stellar.snow.astralis.engine.render.shader;
 // ██                                                                                              ██
 // ██████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.io.*;
 import java.lang.foreign.*;
 import java.nio.ByteBuffer;
@@ -35,15 +33,12 @@ import java.util.function.*;
 import java.util.regex.*;
 import java.util.stream.*;
 import java.util.zip.*;
-
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.shaderc.*;
-
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.util.shaderc.Shaderc.*;
-
 /**
  * AdvancedShaderCompiler - Production-grade shader compilation system.
  * 
@@ -76,7 +71,6 @@ import static org.lwjgl.util.shaderc.Shaderc.*;
  * @author Stellar Snow Engine Team
  * @version 4.0.0
  */
-public final class AdvancedShaderCompiler implements AutoCloseable {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // CONSTANTS

@@ -1,6 +1,4 @@
 package stellar.snow.astralis.engine.render.minecraft.common;
-
-public final class AstralisRenderEngine {
     private static AstralisRenderEngine INSTANCE;
     private boolean initialized = false;
     

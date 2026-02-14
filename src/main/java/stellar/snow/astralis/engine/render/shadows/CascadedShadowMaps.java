@@ -1,6 +1,5 @@
 package stellar.snow.astralis.engine.render.shadows;
 import org.joml.*;
-public final class CascadedShadowMaps {
     private final int cascadeCount = 4;
     private final float[] cascadeSplits = new float[cascadeCount];
     public void calculateSplits(float nearPlane, float farPlane) {

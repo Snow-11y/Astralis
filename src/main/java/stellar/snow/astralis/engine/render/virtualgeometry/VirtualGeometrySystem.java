@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.virtualgeometry;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                                ██
@@ -14,16 +13,13 @@ package stellar.snow.astralis.engine.render.virtualgeometry;
 // ██    Version: 7.0.0 | Billions of Triangles | Automatic LOD Streaming                          ██
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import jdk.incubator.vector.*;
-
 import static java.lang.foreign.ValueLayout.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                              VIRTUAL GEOMETRY SYSTEM (NANITE)                                     ║
@@ -52,7 +48,6 @@ import static java.lang.foreign.ValueLayout.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public class VirtualGeometrySystem {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // CLUSTER CONFIGURATION

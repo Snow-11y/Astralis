@@ -1,9 +1,5 @@
 package stellar.snow.astralis.engine.render.ocean;
-
 import org.lwjgl.vulkan.*;
-import static org.lwjgl.vulkan.VK10.*;
-
-public final class OceanFoam implements AutoCloseable {
     private final VkDevice device;
     private final OceanRenderingSystem.OceanConfig config;
     private long foamPipeline;
@@ -30,7 +26,6 @@ public final class OceanFoam implements AutoCloseable {
     
     private String generateFoamShader() {
         return """
-            #version 450
             layout(local_size_x = 8, local_size_y = 8) in;
             
             layout(binding = 0) uniform sampler2D heightMap;

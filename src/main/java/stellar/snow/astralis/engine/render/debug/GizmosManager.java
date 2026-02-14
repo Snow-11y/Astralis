@@ -1,10 +1,8 @@
 package stellar.snow.astralis.engine.render.debug;
-
 import org.joml.*;
 import java.lang.Math;
 import java.util.*;
 import java.util.concurrent.*;
-
 /**
  * GizmosManager - Advanced 3D Visual Debugging
  * 
@@ -23,7 +21,6 @@ import java.util.concurrent.*;
  * - Layer system for filtering
  * - Performance-optimized batch rendering
  */
-public final class GizmosManager {
     
     /**
      * Gizmo types

@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.shadows;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                                ██
@@ -14,18 +13,13 @@ package stellar.snow.astralis.engine.render.shadows;
 // ██   CSM | VSM | PCF | PCSS | ESM | Contact Shadows | Ray-Traced Shadows                       ██
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-
 import java.lang.foreign.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
-
 import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                        ADVANCED SHADOW SYSTEM                                                    ║
@@ -60,7 +54,6 @@ import static org.lwjgl.vulkan.VK10.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public final class AdvancedShadowSystem implements AutoCloseable {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // CONFIGURATION

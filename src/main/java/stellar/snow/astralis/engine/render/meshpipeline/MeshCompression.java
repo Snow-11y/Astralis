@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.meshpipeline;
-public final class MeshCompression {
     public static byte[] compressPositions(float[] positions) {
         // Quantize to 16-bit fixed point
         byte[] compressed = new byte[positions.length * 2];

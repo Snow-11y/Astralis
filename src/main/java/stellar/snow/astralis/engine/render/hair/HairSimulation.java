@@ -1,13 +1,10 @@
 package stellar.snow.astralis.engine.render.hair;
-
 import org.joml.*;
 import java.util.*;
-
 /**
  * Physics-based hair simulation using position-based dynamics
  * Simulates realistic hair movement with wind, gravity, and collisions
  */
-public final class HairSimulation {
     
     private static class HairStrand {
         Vector3f[] points;           // Current positions

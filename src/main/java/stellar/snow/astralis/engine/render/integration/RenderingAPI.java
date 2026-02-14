@@ -1,17 +1,13 @@
 package stellar.snow.astralis.engine.render.integration;
-
 import stellar.snow.astralis.engine.gpu.compute.CullingManager;
 import stellar.snow.astralis.engine.gpu.compute.IndirectDrawManager;
 import stellar.snow.astralis.engine.render.gpudriven.CullingSystem;
 import stellar.snow.astralis.engine.render.gpudriven.IndirectDrawBridge;
 import stellar.snow.astralis.engine.render.debug.DeveloperDebugSystem;
 import stellar.snow.astralis.engine.render.stability.StabilityValidator;
-
 import net.minecraft.world.World;
 import net.minecraft.entity.Entity;
-
 import java.util.*;
-
 /**
  * Modder-Friendly Rendering API
  * 
@@ -26,7 +22,6 @@ import java.util.*;
  * The complex systems (Arena, DAG, etc) are INTERNAL IMPLEMENTATION.
  * The PUBLIC API is simple and safe.
  */
-public final class RenderingAPI {
     
     private final CullingSystem cullingSystem;
     private final IndirectDrawBridge drawBridge;

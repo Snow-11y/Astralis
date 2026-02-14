@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.material;
-public final class PBRMaterialBuilder {
     private long albedoMap, normalMap, metallicMap, roughnessMap, aoMap;
     private float metallicFactor = 0.0f, roughnessFactor = 0.5f;
     public PBRMaterialBuilder albedo(long texture) { albedoMap = texture; return this; }

@@ -1,10 +1,7 @@
 package stellar.snow.astralis.engine.render.graph;
-
 import stellar.snow.astralis.engine.gpu.authority.GPUBackend;
-
 import java.util.EnumSet;
 import java.util.function.Predicate;
-
 /**
  * PassBuilder - Fluent API for defining render pass requirements.
  * 
@@ -18,7 +15,6 @@ import java.util.function.Predicate;
  *   <li>Profiling and debug options</li>
  * </ul>
  */
-public final class PassBuilder {
     
     private final RenderGraph graph;
     private final RenderPassNode node;

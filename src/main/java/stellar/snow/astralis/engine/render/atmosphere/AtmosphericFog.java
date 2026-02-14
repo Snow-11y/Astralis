@@ -1,9 +1,6 @@
 package stellar.snow.astralis.engine.render.atmosphere;
-
 import org.lwjgl.vulkan.*;
 import java.lang.foreign.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * AtmosphericFog - Volumetric Atmospheric Fog System
  * 
@@ -22,7 +19,6 @@ import static org.lwjgl.vulkan.VK10.*;
  * - Multiple fog layers
  * - Wind animation support
  */
-public final class AtmosphericFog implements AutoCloseable {
     
     private final VkDevice device;
     private final Arena arena;

@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.texture;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ██████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                              ██
@@ -16,11 +15,9 @@ package stellar.snow.astralis.engine.render.texture;
 // ██                                                                                              ██
 // ██████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
-
 import java.io.IOException;
 import java.lang.foreign.*;
 import java.lang.ref.Cleaner;
@@ -37,11 +34,8 @@ import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * VirtualTextureSystem - Production-grade sparse virtual texture implementation.
  * 
@@ -80,7 +74,6 @@ import static org.lwjgl.vulkan.VK10.*;
  * @author Stellar Snow Engine Team
  * @version 4.0.0
  */
-public final class VirtualTextureSystem implements AutoCloseable {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // CONSTANTS & CONFIGURATION

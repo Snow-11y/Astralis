@@ -1,20 +1,16 @@
 package stellar.snow.astralis.engine.render.system;
-
 import stellar.snow.astralis.Astralis;
+import static org.lwjgl.opengl.GL.*;
 import stellar.snow.astralis.engine.render.pipeline.*;
 import stellar.snow.astralis.api.opengl.buffer.*;
 import stellar.snow.astralis.nexus.vulkan.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-
 import java.nio.LongBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.KHRPushDescriptor.*;
-
 /**
  * RenderBridge - The singleton orchestrator for the Vulkan rendering backend.
  * 
@@ -29,7 +25,6 @@ import static org.lwjgl.vulkan.KHRPushDescriptor.*;
  * </ul>
  * </p>
  */
-public class RenderBridge {
     
     private static final RenderBridge INSTANCE = new RenderBridge();
     
@@ -64,11 +59,9 @@ public class RenderBridge {
     private boolean supportsPushDescriptors = false;
     private boolean supportsDynamicRendering = false;
     private boolean supportsBindless = false;
-
     public static RenderBridge getInstance() { 
         return INSTANCE; 
     }
-
     /**
      * Initializes the render bridge with the given window handle.
      * 
@@ -316,7 +309,6 @@ public class RenderBridge {
             }
         }
     }
-
     private void fallbackToOpenGL() {
         Astralis.LOGGER.info("[RenderBridge] Selecting OpenGL fallback...");
         
@@ -355,7 +347,7 @@ public class RenderBridge {
     
     private int detectOpenGLVersion() {
         try {
-            String version = org.lwjgl.opengl.GL11.glGetString(org.lwjgl.opengl.GL11.GL_VERSION);
+            String version = org.lwjgl.opengl.GL.glGetString(org.lwjgl.opengl.GL.GL_VERSION);
             if (version != null && version.length() >= 3) {
                 int major = version.charAt(0) - '0';
                 int minor = version.charAt(2) - '0';
@@ -373,7 +365,6 @@ public class RenderBridge {
         int patch = VK_API_VERSION_PATCH(version);
         return String.format("%d.%d.%d", major, minor, patch);
     }
-
     // ========================================================================
     // FRAME MANAGEMENT
     // ========================================================================
@@ -478,7 +469,6 @@ public class RenderBridge {
         context.recreateSwapchain();
         // May need to recreate framebuffers, etc.
     }
-
     // ========================================================================
     // PUBLIC API
     // ========================================================================
@@ -534,7 +524,6 @@ public class RenderBridge {
     public boolean supportsBindless() {
         return supportsBindless;
     }
-
     // ========================================================================
     // CLEANUP
     // ========================================================================

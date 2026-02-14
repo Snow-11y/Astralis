@@ -1,13 +1,10 @@
 package stellar.snow.astralis.engine.render.workgraphs;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // WORK GRAPHS - GPU Work Scheduling (DirectX 12)
 // Version: 3.0.0 | Dynamic GPU Workflows | Node-Based Execution | Producer-Consumer
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.util.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                                WORK GRAPHS SYSTEM                                                 ║
@@ -38,7 +35,6 @@ import java.util.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public class WorkGraphSystem {
     
     public enum NodeType {
         BROADCASTING,      // 1 producer -> N consumers

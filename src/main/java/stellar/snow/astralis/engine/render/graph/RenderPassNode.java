@@ -1,11 +1,8 @@
 package stellar.snow.astralis.engine.render.graph;
-
 import stellar.snow.astralis.engine.gpu.authority.GPUBackend;
-
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
-
 /**
  * RenderPassNode - A single atomic operation in the Render Graph.
  * 
@@ -19,7 +16,6 @@ import java.util.function.Predicate;
  *   <li>Split barriers for enhanced parallelism</li>
  * </ul>
  */
-public final class RenderPassNode {
     
     private static final AtomicLong ID_GENERATOR = new AtomicLong();
     

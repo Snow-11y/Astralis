@@ -1,9 +1,7 @@
 package stellar.snow.astralis.engine.render.debug;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
-
 /**
  * DebugHUDManager - In-Game Debug HUD System
  * 
@@ -21,7 +19,6 @@ import java.util.function.*;
  * - Color-coded warnings
  * - Customizable layout
  */
-public final class DebugHUDManager {
     
     /**
      * HUD element types

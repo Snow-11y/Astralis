@@ -1,7 +1,5 @@
 package stellar.snow.astralis.engine.render.meshlet;
-
 import java.nio.ByteBuffer;
-
 /**
  * MeshletBounds - Separate bounds structure for GPU culling passes.
  * 
@@ -14,7 +12,6 @@ import java.nio.ByteBuffer;
  * - vec4 coneCullData   (16 bytes: apex.xyz + cutoff, axis.xy packed)
  * </pre>
  */
-public final class MeshletBounds {
     
     public static final int SIZE_BYTES = 32;
     

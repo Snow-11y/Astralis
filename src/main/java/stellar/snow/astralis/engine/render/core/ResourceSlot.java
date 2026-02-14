@@ -1,11 +1,9 @@
 package stellar.snow.astralis.engine.render.core;
-
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.Supplier;
-
 /**
  * ResourceSlot<T> - Type-Safe Resource Handle
  * 
@@ -20,7 +18,6 @@ import java.util.function.Supplier;
  * - Thread-safe access
  * - Lazy initialization support
  */
-public final class ResourceSlot<T extends AutoCloseable> {
     
     // Unique slot ID
     private final long slotId;

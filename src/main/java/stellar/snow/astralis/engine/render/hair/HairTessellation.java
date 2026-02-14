@@ -1,12 +1,9 @@
 package stellar.snow.astralis.engine.render.hair;
-
 import org.joml.*;
-
 /**
  * Hair strand tessellation using smooth curve interpolation
  * Converts low-poly control points into smooth, high-resolution curves
  */
-public final class HairTessellation {
     
     /**
      * Generate smooth tessellated strand from control points using Catmull-Rom splines

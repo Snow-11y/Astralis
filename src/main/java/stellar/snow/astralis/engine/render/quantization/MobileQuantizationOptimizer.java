@@ -1,7 +1,5 @@
 package stellar.snow.astralis.engine.render.quantization;
-
 import org.lwjgl.vulkan.*;
-
 /**
  * Mobile-Specific Quantization Optimizations
  * Baseline: Mali T600/T700/T800, Adreno 506-540
@@ -12,7 +10,6 @@ import org.lwjgl.vulkan.*;
  * - Tiled processing to reduce bandwidth
  * - Vectorized operations where supported
  */
-public final class MobileQuantizationOptimizer {
     
     private final QuantizationSystem.MobileGPUTier tier;
     
@@ -75,7 +72,6 @@ public final class MobileQuantizationOptimizer {
         String precision = isFP16 ? "mediump" : "highp";
         
         return String.format("""
-            #version 450
             layout(local_size_x = %d) in;
             
             layout(binding = 0) buffer InputBuffer {

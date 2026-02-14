@@ -1,10 +1,8 @@
 package stellar.snow.astralis.engine.render.stability;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.lang.foreign.*;
-
 /**
  * Stability Layer - Production-Grade Validation
  * 
@@ -20,7 +18,6 @@ import java.lang.foreign.*;
  * Kirino's FSM is simple enough to be "obviously correct."
  * Our systems are powerful enough to need validation layers.
  */
-public final class StabilityValidator {
     
     private final boolean validationEnabled;
     private final ValidationLevel level;

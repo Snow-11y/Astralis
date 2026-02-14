@@ -1,14 +1,11 @@
 package stellar.snow.astralis.engine.render.particles;
-
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import java.lang.foreign.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
-import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.system.MemoryStack.*;
-
 /**
  * GPU-Driven Particle System
  * - 10 million particles support
@@ -20,7 +17,6 @@ import static org.lwjgl.system.MemoryStack.*;
  * - Mesh particles
  * - Sorting for transparency
  */
-public final class GPUParticleSystem implements AutoCloseable {
     
     private static final int MAX_PARTICLES = 10_000_000;
     private static final int MAX_EMITTERS = 1024;
@@ -387,7 +383,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     // Shader generation (complete GLSL code)
     private String generateEmitShader() {
         return """
-            #version 450
             layout(local_size_x = 64) in;
             
             layout(binding = 0) buffer Positions { vec4 positions[]; };
@@ -432,7 +427,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     
     private String generateSimulateShader() {
         return """
-            #version 450
             layout(local_size_x = 256) in;
             
             layout(binding = 0) buffer Positions { vec4 positions[]; };
@@ -488,7 +482,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     
     private String generateCollisionShader() {
         return """
-            #version 450
             layout(local_size_x = 256) in;
             
             layout(binding = 0) buffer Positions { vec4 positions[]; };
@@ -527,7 +520,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     
     private String generateSortShader() {
         return """
-            #version 450
             layout(local_size_x = 256) in;
             
             layout(binding = 0) buffer Positions { vec4 positions[]; };
@@ -550,7 +542,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     
     private String generateBitonicSortShader() {
         return """
-            #version 450
             layout(local_size_x = 512) in;
             
             layout(binding = 0) buffer SortKeys { uint keys[]; };
@@ -590,7 +581,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     
     private String generateBillboardVertShader() {
         return """
-            #version 450
             layout(location = 0) in vec3 position;
             layout(location = 1) in vec4 color;
             layout(location = 2) in vec2 texCoord;
@@ -613,7 +603,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     
     private String generateBillboardFragShader() {
         return """
-            #version 450
             layout(location = 0) in vec4 inColor;
             layout(location = 1) in vec2 inTexCoord;
             
@@ -634,7 +623,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     
     private String generateRibbonVertShader() {
         return """
-            #version 450
             // Ribbon shader connects consecutive particles
             layout(location = 0) out vec4 outColor;
             
@@ -647,7 +635,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     
     private String generateRibbonFragShader() {
         return """
-            #version 450
             layout(location = 0) in vec4 inColor;
             layout(location = 0) out vec4 outColor;
             
@@ -659,7 +646,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     
     private String generateMeshVertShader() {
         return """
-            #version 450
             // Mesh particles - each particle instance renders a mesh
             layout(location = 0) in vec3 meshPos;
             layout(location = 1) in vec3 meshNormal;
@@ -672,7 +658,6 @@ public final class GPUParticleSystem implements AutoCloseable {
     
     private String generateMeshFragShader() {
         return """
-            #version 450
             layout(location = 0) out vec4 outColor;
             
             void main() {

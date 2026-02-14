@@ -1,9 +1,7 @@
 package stellar.snow.astralis.engine.render.decals;
-
 import org.joml.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-
 /**
  * DecalAtlas - Texture Atlas Management for Decals
  * 
@@ -14,7 +12,6 @@ import java.util.concurrent.atomic.*;
  * - UV coordinate mapping
  * - Runtime updates
  */
-public final class DecalAtlas {
     
     private final int atlasWidth;
     private final int atlasHeight;

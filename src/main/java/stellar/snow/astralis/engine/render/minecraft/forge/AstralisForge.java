@@ -1,12 +1,9 @@
 package stellar.snow.astralis.engine.render.minecraft.forge;
-
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import stellar.snow.astralis.engine.render.minecraft.common.AstralisRenderEngine;
-
 @Mod("astralis")
-public class AstralisForge {
     public AstralisForge() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
     }

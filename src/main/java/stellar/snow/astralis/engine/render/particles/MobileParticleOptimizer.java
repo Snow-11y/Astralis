@@ -1,6 +1,4 @@
 package stellar.snow.astralis.engine.render.particles;
-
-public final class MobileParticleOptimizer {
     public static int getMaxParticlesForTier(String gpuName) {
         if (gpuName.contains("mali-t") || gpuName.contains("adreno 5")) {
             return 100_000; // Low-tier

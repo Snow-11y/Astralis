@@ -1,10 +1,8 @@
 package stellar.snow.astralis.engine.render.compute;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-
 /**
  * JobScheduler - Structured Multi-Threading with Workload Estimation
  * 
@@ -21,7 +19,6 @@ import java.util.function.*;
  * - Automatic thread pool sizing
  * - Performance monitoring
  */
-public final class JobScheduler implements AutoCloseable {
     
     /**
      * Job priority levels

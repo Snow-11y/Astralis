@@ -1,14 +1,11 @@
 package stellar.snow.astralis.engine.render.graph;
-
 import stellar.snow.astralis.engine.gpu.authority.GPUBackend;
 import stellar.snow.astralis.engine.gpu.authority.GPUBackendSelector;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
 /**
  * RenderGraph - Modern DAG-based rendering orchestrator.
  * 
@@ -23,7 +20,6 @@ import java.util.stream.Collectors;
  *   <li>Integrated GPU profiling</li>
  * </ul>
  */
-public final class RenderGraph {
     
     // ═══════════════════════════════════════════════════════════════════════
     // CONFIGURATION

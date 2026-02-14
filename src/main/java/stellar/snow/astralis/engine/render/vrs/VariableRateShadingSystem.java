@@ -1,13 +1,10 @@
 package stellar.snow.astralis.engine.render.vrs;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // VARIABLE RATE SHADING - Adaptive Shading Density
 // Version: 4.0.0 | VRS Tier 2 | Foveated Rendering | Performance Optimization
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.util.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                           VARIABLE RATE SHADING (VRS)                                             ║
@@ -34,7 +31,6 @@ import java.util.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public class VariableRateShadingSystem {
     
     public enum ShadingRate {
         RATE_1X1(1, 1),    // Full rate

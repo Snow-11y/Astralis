@@ -1,12 +1,9 @@
 package stellar.snow.astralis.engine.render.minecraft.resources;
-
 import java.nio.file.*;
 import java.util.*;
-
 /**
  * Loads shaders from Minecraft resource packs
  */
-public final class ShaderLoader {
     
     private final Map<String, Path> shaderPaths = new HashMap<>();
     

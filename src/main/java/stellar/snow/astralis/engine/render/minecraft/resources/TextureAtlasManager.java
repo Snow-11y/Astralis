@@ -1,11 +1,8 @@
 package stellar.snow.astralis.engine.render.minecraft.resources;
-
 import java.util.*;
-
 /**
  * Manages Minecraft's texture atlases (blocks, items, etc.)
  */
-public final class TextureAtlasManager {
     
     private static class AtlasEntry {
         String name;

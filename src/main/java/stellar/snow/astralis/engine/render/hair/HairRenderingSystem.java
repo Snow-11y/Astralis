@@ -1,8 +1,5 @@
 package stellar.snow.astralis.engine.render.hair;
-
 import org.lwjgl.vulkan.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * Strand-Based Hair Rendering
  * - Kajiya-Kay shading
@@ -11,7 +8,6 @@ import static org.lwjgl.vulkan.VK10.*;
  * - Approximate deep shadows
  * - LOD system
  */
-public final class HairRenderingSystem implements AutoCloseable {
     
     private final VkDevice device;
     private static final int MAX_HAIR_STRANDS = 100000;

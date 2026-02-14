@@ -1,15 +1,12 @@
 package stellar.snow.astralis.engine.render.meshlet;
-
 import stellar.snow.astralis.engine.gpu.authority.GPUBackend;
 import stellar.snow.astralis.engine.gpu.authority.GPUBackendSelector;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-
 /**
  * MeshletRenderer - Modern GPU-driven meshlet rendering system.
  * 
@@ -25,7 +22,6 @@ import java.util.function.Consumer;
  *   <li>Dynamic mesh streaming support</li>
  * </ul>
  */
-public final class MeshletRenderer implements AutoCloseable {
     
     // ═══════════════════════════════════════════════════════════════════════
     // CONFIGURATION

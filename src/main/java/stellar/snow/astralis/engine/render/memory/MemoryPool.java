@@ -1,6 +1,5 @@
 package stellar.snow.astralis.engine.render.memory;
 import java.util.concurrent.*;
-public final class MemoryPool {
     private final long blockSize;
     private final ConcurrentLinkedQueue<Long> freeBlocks = new ConcurrentLinkedQueue<>();
     public MemoryPool(long blockSize, int initialBlocks) {

@@ -1,14 +1,11 @@
 package stellar.snow.astralis.engine.render.compute;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // COMPUTE SHADER SYSTEM - GPU Compute Pipeline
 // Version: 7.0.0 | Async Compute | Wave Operations | Shared Memory Optimization
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.util.*;
 import java.util.concurrent.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                               COMPUTE SHADER SYSTEM                                               ║
@@ -32,7 +29,6 @@ import java.util.concurrent.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public class ComputeShaderSystem {
     
     public static class ComputePipeline {
         public long pipelineHandle;

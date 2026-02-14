@@ -1,14 +1,10 @@
 package stellar.snow.astralis.engine.render.ocean;
-
 import org.lwjgl.vulkan.*;
 import java.lang.foreign.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * FFT Wave Simulation using Phillips Spectrum
  * Optimized for mobile GPUs with reduced resolution modes
  */
-public final class OceanFFT implements AutoCloseable {
     
     private final VkDevice device;
     private final OceanRenderingSystem.OceanConfig config;
@@ -111,7 +107,6 @@ public final class OceanFFT implements AutoCloseable {
     
     private String generateInitSpectrumShader() {
         return """
-            #version 450
             layout(local_size_x = 16, local_size_y = 16) in;
             
             layout(binding = 0, rgba32f) uniform image2D h0Image;
@@ -149,7 +144,6 @@ public final class OceanFFT implements AutoCloseable {
     
     private String generateFFTHorizontalShader() {
         return """
-            #version 450
             layout(local_size_x = 16, local_size_y = 1) in;
             
             layout(binding = 0, rgba32f) uniform image2D inputImage;
@@ -191,7 +185,6 @@ public final class OceanFFT implements AutoCloseable {
     
     private String generateFFTVerticalShader() {
         return """
-            #version 450
             layout(local_size_x = 1, local_size_y = 16) in;
             
             layout(binding = 0, rgba32f) uniform image2D inputImage;
@@ -230,7 +223,6 @@ public final class OceanFFT implements AutoCloseable {
     
     private String generateCombineShader() {
         return """
-            #version 450
             layout(local_size_x = 8, local_size_y = 8) in;
             
             layout(binding = 0, rgba32f) uniform image2D fftResult;

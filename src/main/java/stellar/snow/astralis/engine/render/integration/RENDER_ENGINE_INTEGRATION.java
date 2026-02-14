@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.integration;
-
 import stellar.snow.astralis.Astralis;
 import stellar.snow.astralis.config.Config;
 import stellar.snow.astralis.engine.ecs.core.*;
@@ -11,11 +10,9 @@ import stellar.snow.astralis.engine.render.graph.*;
 import stellar.snow.astralis.engine.render.system.*;
 import stellar.snow.astralis.engine.render.pipeline.*;
 import stellar.snow.astralis.engine.render.resolution.*;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-
 /**
  * RENDER_ENGINE_INTEGRATION - Complete integration of render engine with ECS and Config
  * 
@@ -35,8 +32,6 @@ import java.util.concurrent.atomic.*;
  * @version 2.0.0 - Render Engine Integration
  * @since Java 25 + LWJGL 3.4.0
  */
-public final class RENDER_ENGINE_INTEGRATION {
-
     private static final AtomicBoolean initialized = new AtomicBoolean(false);
     private static final AtomicReference<RenderGraph> renderGraph = new AtomicReference<>();
     private static final AtomicReference<RenderSystem> renderSystem = new AtomicReference<>();

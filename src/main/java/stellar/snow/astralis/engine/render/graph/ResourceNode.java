@@ -1,9 +1,6 @@
 package stellar.snow.astralis.engine.render.graph;
-
 import stellar.snow.astralis.api.vulkan.memory.MemoryAllocation;
-
 import java.util.*;
-
 /**
  * Represents a GPU resource (Texture/Buffer) in the Render Graph.
  * 
@@ -15,7 +12,6 @@ import java.util.*;
  * - Version tracking for temporal resources
  * - Debug labeling
  */
-public final class ResourceNode {
     
     // ═══════════════════════════════════════════════════════════════════════
     // ENUMS

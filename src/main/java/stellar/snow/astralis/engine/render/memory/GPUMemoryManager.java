@@ -1,17 +1,13 @@
 package stellar.snow.astralis.engine.render.memory;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // GPU MEMORY MANAGEMENT SYSTEM - Smart Allocation, Streaming, and Defragmentation
 // Version: 5.0.0 | Unified Memory Architecture | Adaptive Streaming | Zero-Copy Transfers
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-
 import static java.lang.foreign.ValueLayout.*;
-
 /**
  * Advanced GPU memory management with:
  * • Buddy allocator for efficient allocation
@@ -22,7 +18,6 @@ import static java.lang.foreign.ValueLayout.*;
  * • Resource streaming and eviction
  * • Memory aliasing and compression
  */
-public class GPUMemoryManager {
     
     public enum MemoryType {
         DEVICE_LOCAL,          // GPU-only memory (fastest)

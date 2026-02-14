@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.terrain;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ██████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                              ██
@@ -16,11 +15,9 @@ package stellar.snow.astralis.engine.render.terrain;
 // ██                                                                                              ██
 // ██████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.foreign.Arena;
@@ -37,11 +34,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
-
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * TerrainRenderSystem - Production-grade terrain rendering with clipmap LOD.
  * 
@@ -83,7 +77,6 @@ import static org.lwjgl.vulkan.VK10.*;
  * @author Stellar Snow Engine Team
  * @version 4.0.0
  */
-public final class TerrainRenderSystem implements AutoCloseable {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // CONSTANTS

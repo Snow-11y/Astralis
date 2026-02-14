@@ -1,9 +1,6 @@
 package stellar.snow.astralis.engine.render.decals;
-
 import org.lwjgl.vulkan.*;
 import java.util.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * Deferred Decal System
  * - OBB projection
@@ -11,7 +8,6 @@ import static org.lwjgl.vulkan.VK10.*;
  * - Normal map blending
  * - Clustered culling
  */
-public final class DecalSystem implements AutoCloseable {
     
     private final VkDevice device;
     private static final int MAX_DECALS = 4096;

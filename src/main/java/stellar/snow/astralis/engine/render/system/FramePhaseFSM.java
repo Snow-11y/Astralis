@@ -1,10 +1,8 @@
 package stellar.snow.astralis.engine.render.system;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.Consumer;
-
 /**
  * FramePhaseFSM - Finite State Machine for Frame Execution
  * 
@@ -18,7 +16,6 @@ import java.util.function.Consumer;
  * - Performance monitoring per phase
  * - Rollback capability on errors
  */
-public final class FramePhaseFSM {
     
     /**
      * All possible frame phases in strict execution order

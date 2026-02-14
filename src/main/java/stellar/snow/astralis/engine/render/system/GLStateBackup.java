@@ -1,11 +1,7 @@
 package stellar.snow.astralis.engine.render.system;
-
 import org.lwjgl.opengl.*;
 import java.nio.*;
 import java.util.*;
-
-import static org.lwjgl.opengl.GL46C.*;
-
 /**
  * GLStateBackup - Robust OpenGL State Management
  * 
@@ -18,7 +14,6 @@ import static org.lwjgl.opengl.GL46C.*;
  * - Automatic validation and error detection
  * - Performance optimized with dirty tracking
  */
-public final class GLStateBackup implements AutoCloseable {
     
     private static final int MAX_TEXTURE_UNITS = 32;
     private static final int MAX_VERTEX_ATTRIBS = 16;

@@ -1,14 +1,11 @@
 package stellar.snow.astralis.engine.render.gpudriven;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // GPU-DRIVEN RENDERING - Autonomous GPU Execution
 // Version: 6.0.0 | Indirect Rendering | GPU Culling | Command Generation
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.util.*;
 import java.util.concurrent.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                          GPU-DRIVEN RENDERING SYSTEM                                              ║
@@ -40,7 +37,6 @@ import java.util.concurrent.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public class GPUDrivenRenderer {
     
     public static class InstanceData {
         public float[] transform;      // 4x4 matrix

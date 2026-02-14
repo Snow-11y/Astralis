@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.resolution;
-public final class DynamicResolution {
     private float currentScale = 1.0f;
     private final float targetFrameTime = 16.666f; // 60 FPS
     public void update(float actualFrameTime) {

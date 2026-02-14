@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.memory;
-public final class StagingBufferManager {
     private long stagingBuffer;
     private long stagingMemory;
     private long mappedPtr;

@@ -1,10 +1,7 @@
 package stellar.snow.astralis.engine.render.bindless;
-
 import org.lwjgl.vulkan.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * BindlessTextureManager - Efficient Bindless Texture Management
  * 
@@ -18,7 +15,6 @@ import static org.lwjgl.vulkan.VK10.*;
  * - Reference counting for cleanup
  * - Hot-reloading support
  */
-public final class BindlessTextureManager implements AutoCloseable {
     
     private static final int MAX_TEXTURES = 100000;
     

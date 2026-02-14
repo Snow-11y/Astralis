@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.postprocessing;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                                ██
@@ -14,24 +13,17 @@ package stellar.snow.astralis.engine.render.postprocessing;
 // ██   Java 25 + FFM + Vector API | Mobile GPU Optimized | Compute-Heavy                         ██
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
-
 import jdk.incubator.vector.*;
-
 import java.lang.foreign.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
-import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK12.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                        AAA POST-PROCESSING SYSTEM                                                ║
@@ -68,7 +60,6 @@ import static org.lwjgl.vulkan.VK12.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public final class PostProcessingSystem implements AutoCloseable {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // VULKAN RESOURCES

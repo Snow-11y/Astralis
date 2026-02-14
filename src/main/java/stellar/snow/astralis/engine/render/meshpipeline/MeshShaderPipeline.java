@@ -1,14 +1,11 @@
 package stellar.snow.astralis.engine.render.meshpipeline;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // MESH SHADER PIPELINE - Next-Gen Geometry Processing
 // Version: 5.0.0 | Task + Mesh Shaders | Meshlet Culling | GPU-Driven LOD
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import java.lang.foreign.*;
 import java.util.*;
 import java.util.concurrent.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                             MESH SHADER PIPELINE                                                  ║
@@ -37,7 +34,6 @@ import java.util.concurrent.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public class MeshShaderPipeline {
     
     public static class TaskShaderStage {
         public long shaderHandle;

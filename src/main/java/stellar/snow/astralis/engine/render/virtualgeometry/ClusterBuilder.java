@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.virtualgeometry;
-public final class ClusterBuilder {
     public static class Cluster {
         int[] indices;
         float[] vertices;

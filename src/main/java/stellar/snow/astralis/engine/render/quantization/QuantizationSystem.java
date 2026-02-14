@@ -1,14 +1,11 @@
 package stellar.snow.astralis.engine.render.quantization;
-
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import java.lang.foreign.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
-import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.system.MemoryStack.*;
-
 /**
  * FP8/FP16 Quantization System for Neural Rendering and Memory Optimization
  * 
@@ -21,7 +18,6 @@ import static org.lwjgl.system.MemoryStack.*;
  * - CUDA Tensor Core optimization
  * - Mali/Adreno FP16 fast paths
  */
-public final class QuantizationSystem implements AutoCloseable {
     
     private final VkDevice device;
     private final Arena arena;

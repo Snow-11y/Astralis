@@ -1,9 +1,6 @@
 package stellar.snow.astralis.engine.render.atmosphere;
-
 import org.lwjgl.vulkan.*;
 import java.lang.foreign.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * Physically-Based Atmospheric Scattering
  * Implementation of Bruneton's precomputed atmospheric scattering
@@ -13,7 +10,6 @@ import static org.lwjgl.vulkan.VK10.*;
  * - Aerial perspective
  * - Day/night cycle
  */
-public final class AtmosphericScattering implements AutoCloseable {
     
     private final VkDevice device;
     private final Arena arena;

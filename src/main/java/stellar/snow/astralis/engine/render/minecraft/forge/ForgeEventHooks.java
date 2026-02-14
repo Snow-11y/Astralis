@@ -1,13 +1,10 @@
 package stellar.snow.astralis.engine.render.minecraft.forge;
-
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-
 /**
  * Forge-specific event hooks for Astralis rendering
  */
 @Mod.EventBusSubscriber
-public final class ForgeEventHooks {
     
     @SubscribeEvent
     public static void onRenderLevelStage(Object event) {

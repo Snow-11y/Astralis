@@ -1,15 +1,13 @@
 package stellar.snow.astralis.engine.render.neural;
-
 import org.lwjgl.vulkan.*;
+import static org.lwjgl.vulkan.VK.*;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.*;
-
 /**
  * Neural supersampling - DLSS-style AI upscaling
  * Renders at lower resolution and uses deep learning to reconstruct high-quality output
  */
-public final class NeuralSupersampling {
     
     public enum Quality {
         PERFORMANCE(0.5f, "50% render scale - maximum FPS"),
@@ -69,11 +67,11 @@ public final class NeuralSupersampling {
         int weightsSize = 128 * 1024 * 1024;  // 128MB model
         
         VkBufferCreateInfo bufferInfo = VkBufferCreateInfo.calloc()
-            .sType(VK12.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
+            .sType(VK.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
             .size(weightsSize)
-            .usage(VK12.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | 
-                   VK12.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-            .sharingMode(VK12.VK_SHARING_MODE_EXCLUSIVE);
+            .usage(VK.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | 
+                   VK.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+            .sharingMode(VK.VK_SHARING_MODE_EXCLUSIVE);
         
         // Allocate and load weights from file
         // weightsBuffer = createBuffer(bufferInfo);
@@ -92,10 +90,10 @@ public final class NeuralSupersampling {
             long size = (long) levelWidth * levelHeight * channels * 4;
             
             VkBufferCreateInfo info = VkBufferCreateInfo.calloc()
-                .sType(VK12.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
+                .sType(VK.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
                 .size(size)
-                .usage(VK12.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
-                .sharingMode(VK12.VK_SHARING_MODE_EXCLUSIVE);
+                .usage(VK.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+                .sharingMode(VK.VK_SHARING_MODE_EXCLUSIVE);
             
             // featureMaps[i] = createBuffer(info);
         }
@@ -106,7 +104,6 @@ public final class NeuralSupersampling {
         // Uses tensor core operations on supported hardware (RTX GPUs)
         
         String shaderCode = """
-            #version 460
             #extension GL_EXT_shader_explicit_arithmetic_types : require
             
             layout(local_size_x = 8, local_size_y = 8) in;
@@ -151,16 +148,16 @@ public final class NeuralSupersampling {
     private void allocateTemporalResources(int width, int height) {
         // History buffer for temporal accumulation
         VkImageCreateInfo imageInfo = VkImageCreateInfo.calloc()
-            .sType(VK12.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
-            .imageType(VK12.VK_IMAGE_TYPE_2D)
-            .format(VK12.VK_FORMAT_R16G16B16A16_SFLOAT)
+            .sType(VK.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
+            .imageType(VK.VK_IMAGE_TYPE_2D)
+            .format(VK.VK_FORMAT_R16G16B16A16_SFLOAT)
             .mipLevels(1)
             .arrayLayers(1)
-            .samples(VK12.VK_SAMPLE_COUNT_1_BIT)
-            .tiling(VK12.VK_IMAGE_TILING_OPTIMAL)
-            .usage(VK12.VK_IMAGE_USAGE_STORAGE_BIT | VK12.VK_IMAGE_USAGE_SAMPLED_BIT)
-            .sharingMode(VK12.VK_SHARING_MODE_EXCLUSIVE)
-            .initialLayout(VK12.VK_IMAGE_LAYOUT_UNDEFINED);
+            .samples(VK.VK_SAMPLE_COUNT_1_BIT)
+            .tiling(VK.VK_IMAGE_TILING_OPTIMAL)
+            .usage(VK.VK_IMAGE_USAGE_STORAGE_BIT | VK.VK_IMAGE_USAGE_SAMPLED_BIT)
+            .sharingMode(VK.VK_SHARING_MODE_EXCLUSIVE)
+            .initialLayout(VK.VK_IMAGE_LAYOUT_UNDEFINED);
         
         imageInfo.extent().width(width).height(height).depth(1);
         

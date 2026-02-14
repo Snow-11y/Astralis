@@ -1,15 +1,13 @@
 package stellar.snow.astralis.engine.render.workgraphs;
-
 import org.lwjgl.vulkan.*;
+import static org.lwjgl.vulkan.VK.*;
 import java.nio.*;
 import java.util.*;
-
 /**
  * GPU Work Graph dispatcher
  * Executes node graph on GPU with automatic dependency handling
  * Enables GPU-driven dynamic parallelism (DX12 Work Graphs / Vulkan Task Shaders)
  */
-public final class TaskDispatcher {
     
     private long device;
     private long commandPool;
@@ -30,8 +28,8 @@ public final class TaskDispatcher {
     private void createQueryPool() {
         if (enableProfiling) {
             VkQueryPoolCreateInfo poolInfo = VkQueryPoolCreateInfo.calloc()
-                .sType(VK12.VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO)
-                .queryType(VK12.VK_QUERY_TYPE_TIMESTAMP)
+                .sType(VK.VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO)
+                .queryType(VK.VK_QUERY_TYPE_TIMESTAMP)
                 .queryCount(1024);  // Max nodes * 2 (start + end)
             
             // queryPool = createQueryPool(poolInfo);
@@ -113,7 +111,7 @@ public final class TaskDispatcher {
     private void bindResources(long commandBuffer, NodeGraph.Node node) {
         // Create descriptor set for this node
         VkDescriptorSetAllocateInfo allocInfo = VkDescriptorSetAllocateInfo.calloc()
-            .sType(VK12.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO)
+            .sType(VK.VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO)
             .pSetLayouts(null)  // Would use node.pipelineLayout
             .descriptorSetCount(1);
         
@@ -130,12 +128,12 @@ public final class TaskDispatcher {
             VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1)
                 .buffer(input.buffer)
                 .offset(0)
-                .range(VK12.VK_WHOLE_SIZE);
+                .range(VK.VK_WHOLE_SIZE);
             
             writes.get(writeIdx)
-                .sType(VK12.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
+                .sType(VK.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
                 .dstBinding(input.binding)
-                .descriptorType(VK12.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+                .descriptorType(VK.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
                 .pBufferInfo(bufferInfo);
             
             writeIdx++;
@@ -146,12 +144,12 @@ public final class TaskDispatcher {
             VkDescriptorBufferInfo.Buffer bufferInfo = VkDescriptorBufferInfo.calloc(1)
                 .buffer(output.buffer)
                 .offset(0)
-                .range(VK12.VK_WHOLE_SIZE);
+                .range(VK.VK_WHOLE_SIZE);
             
             writes.get(writeIdx)
-                .sType(VK12.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
+                .sType(VK.VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
                 .dstBinding(output.binding)
-                .descriptorType(VK12.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+                .descriptorType(VK.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
                 .pBufferInfo(bufferInfo);
             
             writeIdx++;
@@ -166,9 +164,9 @@ public final class TaskDispatcher {
      */
     private void insertMemoryBarrier(long commandBuffer) {
         VkMemoryBarrier.Buffer barrier = VkMemoryBarrier.calloc(1)
-            .sType(VK12.VK_STRUCTURE_TYPE_MEMORY_BARRIER)
-            .srcAccessMask(VK12.VK_ACCESS_SHADER_WRITE_BIT)
-            .dstAccessMask(VK12.VK_ACCESS_SHADER_READ_BIT);
+            .sType(VK.VK_STRUCTURE_TYPE_MEMORY_BARRIER)
+            .srcAccessMask(VK.VK_ACCESS_SHADER_WRITE_BIT)
+            .dstAccessMask(VK.VK_ACCESS_SHADER_READ_BIT);
         
         // vkCmdPipelineBarrier(commandBuffer,
         //     VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,

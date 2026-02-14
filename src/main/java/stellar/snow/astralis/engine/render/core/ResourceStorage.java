@@ -1,11 +1,9 @@
 package stellar.snow.astralis.engine.render.core;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 /**
  * ResourceStorage - Centralized Type-Safe Resource Management
  * 
@@ -21,7 +19,6 @@ import java.util.stream.Collectors;
  *   ResourceSlot<Texture> tex = storage.register(Texture.class, myTexture, "albedo");
  *   storage.seal(); // Prevent accidental overwrites during frame
  */
-public final class ResourceStorage implements AutoCloseable {
     
     // Type-safe resource registry
     private final ConcurrentHashMap<Class<?>, ConcurrentHashMap<String, ResourceSlot<?>>> resourcesByType = new ConcurrentHashMap<>();

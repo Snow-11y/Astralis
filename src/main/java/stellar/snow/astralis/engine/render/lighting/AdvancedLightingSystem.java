@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.lighting;
-
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ██                                                                                                ██
@@ -14,22 +13,15 @@ package stellar.snow.astralis.engine.render.lighting;
 // ██   DDGI | Light Probes | Voxel GI | RTGI | Volumetric Lighting | IES Profiles                ██
 // ████████████████████████████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
-
 import jdk.incubator.vector.*;
-
 import java.lang.foreign.*;
 import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
-
 import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK12.*;
 import static org.lwjgl.vulkan.KHRRayTracingPipeline.*;
-
 /**
  * ╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
  * ║                        ADVANCED LIGHTING SYSTEM                                                  ║
@@ -73,7 +65,6 @@ import static org.lwjgl.vulkan.KHRRayTracingPipeline.*;
  * ║                                                                                                   ║
  * ╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
  */
-public final class AdvancedLightingSystem implements AutoCloseable {
     
     // ═══════════════════════════════════════════════════════════════════════════════════════════════
     // CONFIGURATION

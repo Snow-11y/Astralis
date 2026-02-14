@@ -1,5 +1,4 @@
 package stellar.snow.astralis.engine.render.minecraft.mixins;
-
 import net.minecraft.client.render.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -8,9 +7,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import stellar.snow.astralis.engine.render.minecraft.common.AstralisRenderEngine;
-
 @Mixin(GameRenderer.class)
-public class MixinGameRenderer {
     
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {

@@ -1,8 +1,5 @@
 package stellar.snow.astralis.engine.render.ocean;
-
 import java.nio.*;
-
-public final class OceanMesh {
     private final OceanRenderingSystem.OceanConfig config;
     
     public OceanMesh(OceanRenderingSystem.OceanConfig config) {

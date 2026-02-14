@@ -1,9 +1,6 @@
 package stellar.snow.astralis.engine.render.atmosphere;
-
 import org.lwjgl.vulkan.*;
 import java.lang.foreign.*;
-import static org.lwjgl.vulkan.VK10.*;
-
 /**
  * VolumetricClouds - Realistic Volumetric Cloud Rendering
  * 
@@ -19,7 +16,6 @@ import static org.lwjgl.vulkan.VK10.*;
  * Based on research from Guerrilla Games (Horizon Zero Dawn)
  * and techniques from GPU Pro 7.
  */
-public final class VolumetricClouds implements AutoCloseable {
     
     private final VkDevice device;
     private final Arena arena;

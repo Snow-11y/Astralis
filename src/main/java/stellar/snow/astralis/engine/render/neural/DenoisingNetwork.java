@@ -1,15 +1,13 @@
 package stellar.snow.astralis.engine.render.neural;
-
 import org.lwjgl.vulkan.*;
+import static org.lwjgl.vulkan.VK.*;
 import java.nio.*;
 import java.util.*;
-
 /**
  * AI-powered denoising for ray-traced images
  * Uses neural networks to reconstruct clean images from noisy low-sample-count ray tracing
  * Similar to NVIDIA's OptiX AI Denoiser or Intel's OIDN
  */
-public final class DenoisingNetwork {
     
     private long network;
     private long device;
@@ -47,11 +45,11 @@ public final class DenoisingNetwork {
         int modelSize = 256 * 1024 * 1024;  // 256MB model
         
         VkBufferCreateInfo bufferInfo = VkBufferCreateInfo.calloc()
-            .sType(VK12.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
+            .sType(VK.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
             .size(modelSize)
-            .usage(VK12.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | 
-                   VK12.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-            .sharingMode(VK12.VK_SHARING_MODE_EXCLUSIVE);
+            .usage(VK.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | 
+                   VK.VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+            .sharingMode(VK.VK_SHARING_MODE_EXCLUSIVE);
         
         // weightsBuffer = createBuffer(bufferInfo);
         // loadWeightsFromFile("models/denoiser_rt.onnx", weightsBuffer);
@@ -62,24 +60,24 @@ public final class DenoisingNetwork {
         long featureSize = (long)width * height * featureChannels * 4 * networkDepth;
         
         VkBufferCreateInfo featureInfo = VkBufferCreateInfo.calloc()
-            .sType(VK12.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
+            .sType(VK.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
             .size(featureSize)
-            .usage(VK12.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
-            .sharingMode(VK12.VK_SHARING_MODE_EXCLUSIVE);
+            .usage(VK.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+            .sharingMode(VK.VK_SHARING_MODE_EXCLUSIVE);
         
         // featureBuffer = createBuffer(featureInfo);
         
         // Temporal buffer for accumulation
         VkImageCreateInfo temporalInfo = VkImageCreateInfo.calloc()
-            .sType(VK12.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
-            .imageType(VK12.VK_IMAGE_TYPE_2D)
-            .format(VK12.VK_FORMAT_R32G32B32A32_SFLOAT)
+            .sType(VK.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
+            .imageType(VK.VK_IMAGE_TYPE_2D)
+            .format(VK.VK_FORMAT_R32G32B32A32_SFLOAT)
             .mipLevels(1)
             .arrayLayers(1)
-            .samples(VK12.VK_SAMPLE_COUNT_1_BIT)
-            .tiling(VK12.VK_IMAGE_TILING_OPTIMAL)
-            .usage(VK12.VK_IMAGE_USAGE_STORAGE_BIT | VK12.VK_IMAGE_USAGE_SAMPLED_BIT)
-            .sharingMode(VK12.VK_SHARING_MODE_EXCLUSIVE);
+            .samples(VK.VK_SAMPLE_COUNT_1_BIT)
+            .tiling(VK.VK_IMAGE_TILING_OPTIMAL)
+            .usage(VK.VK_IMAGE_USAGE_STORAGE_BIT | VK.VK_IMAGE_USAGE_SAMPLED_BIT)
+            .sharingMode(VK.VK_SHARING_MODE_EXCLUSIVE);
         
         temporalInfo.extent().width(width).height(height).depth(1);
         
@@ -90,7 +88,6 @@ public final class DenoisingNetwork {
         // Create compute pipeline for denoising
         
         String shaderCode = """
-            #version 460
             #extension GL_EXT_shader_explicit_arithmetic_types : require
             
             layout(local_size_x = 8, local_size_y = 8) in;

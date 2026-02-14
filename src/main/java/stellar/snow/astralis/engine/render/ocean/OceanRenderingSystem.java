@@ -1,13 +1,10 @@
 package stellar.snow.astralis.engine.render.ocean;
-
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.*;
 import java.lang.foreign.*;
 import java.nio.*;
 import java.util.*;
-import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.system.MemoryStack.*;
-
 /**
  * Complete Ocean Rendering System with FFT Wave Simulation
  * - Phillips Spectrum FFT waves
@@ -16,7 +13,6 @@ import static org.lwjgl.system.MemoryStack.*;
  * - Adaptive tessellation
  * - Mobile GPU optimization
  */
-public final class OceanRenderingSystem implements AutoCloseable {
     
     private final VkDevice device;
     private final Arena arena;
@@ -167,7 +163,6 @@ public final class OceanRenderingSystem implements AutoCloseable {
     
     private String generateOceanVertexShader() {
         return """
-            #version 450
             layout(location = 0) in vec3 position;
             layout(location = 1) in vec2 texCoord;
             
@@ -198,7 +193,6 @@ public final class OceanRenderingSystem implements AutoCloseable {
     
     private String generateOceanFragmentShader() {
         return """
-            #version 450
             layout(location = 0) in vec2 texCoord;
             layout(location = 1) in vec3 worldPos;
             
@@ -230,7 +224,6 @@ public final class OceanRenderingSystem implements AutoCloseable {
     
     private String generateUnderwaterVertexShader() {
         return """
-            #version 450
             layout(location = 0) in vec3 position;
             layout(location = 0) out vec2 texCoord;
             
@@ -243,7 +236,6 @@ public final class OceanRenderingSystem implements AutoCloseable {
     
     private String generateUnderwaterFragmentShader() {
         return """
-            #version 450
             layout(location = 0) in vec2 texCoord;
             layout(location = 0) out vec4 outColor;
             

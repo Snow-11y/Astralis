@@ -1,6 +1,5 @@
 package stellar.snow.astralis.engine.render.decals;
 import org.joml.*;
-public final class DecalProjection {
     public static Matrix4f createProjectionMatrix(Vector3f position, Quaternionf rotation, Vector3f scale) {
         Matrix4f mat = new Matrix4f();
         mat.translate(position);
