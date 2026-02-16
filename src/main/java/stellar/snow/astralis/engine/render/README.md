@@ -363,7 +363,7 @@ validator.checkNotNull(object, "object");
 3. **Predictability:** Kirino's FSM is obviously correct
    - **Our solution:** Stability validator catches bugs
 > [!IMPORTANT]
-> the comparison with kirino will be (gladly) replaced with other suitable mod once the mod upgrade to newer mc and fabric loader, kirino is the only suitable to compare With since they do the same job (ECS, GPU-Driven rendering).(but mine does it better).
+> the comparison with kirino will be (gladly) replaced with other suitable mod once the mod upgrade to newer mc and fabric loader, kirino is the only suitable to compare With since they do the same job (ECS, GPU-Driven rendering).(but mine does it better), meh, i dont like 'em but fairness is a must to me~!.
 ### What We Do Better
 
 1. **Performance:** 10-100x faster resource access
