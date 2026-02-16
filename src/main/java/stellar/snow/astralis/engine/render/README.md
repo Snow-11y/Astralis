@@ -131,7 +131,7 @@ var result = cullingSystem.cullEntities(world, entities);
 // - result.culled: Entities that should not be rendered
 ```
 
-**Under the hood:** Uses LO's `CullingManager` with temporal smoothing, hysteresis, and FMA precision. You don't need to know this - it just works.
+**Under the hood:** Uses `CullingManager` with temporal smoothing, hysteresis, and FMA precision. You don't need to know this - it just works.
 
 ### 2. Indirect Draw Bridge
 
