@@ -9,7 +9,7 @@
  * ║   ╚══════╝╚═╝  ╚═══╝ ╚═════╝  ╚══╝╚══╝    ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ║
  * ║                                                                              ║
  * ║   Advanced Memory & Performance Optimization for Minecraft Forge 1.12.2      ║
- * ║   Version: 6.0.0 | License: AGPL-3.0 | Target: Java 21+ / LWJGL 3.3.x             ║
+ * ║   Version: 6.0.0 | License: PolyForm Shield | Target: Java 21+ / LWJGL 3.3.x             ║
  * ║                                                                              ║
  * ║   Performance Targets:                                                       ║
  * ║   • String deduplication: <50ns per canonicalization                         ║
