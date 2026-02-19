@@ -1,3 +1,5 @@
+package stellar.snow.astralis.integration.Leafy
+    
 import jdk.incubator.vector.*;
 
 // ==================== UNIVERSAL OPENGL IMPORTS (NO VERSION HARDCODING) ====================
@@ -1196,4 +1198,3 @@ public final class Leafy {
         
         leafy.cleanup();
     }
-}
