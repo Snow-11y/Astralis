@@ -17575,12 +17575,9 @@ public final class SnowyASM {
      * <p>This completes the full replacement of LoliASM with SnowyASM,
      * including all optimizations, bug fixes, and mod compatibility patches.
      * 
-     * @author SnowyASM Contributors
+     * @author SnowyASM
      * @version 1.0.0
      * @since Minecraft 1.12.2
      */
-    public static final String VERSION = "1.0.0";
-    public static final String MOD_ID = "snowyasm";
-    public static final String MOD_NAME = "SnowyASM";
     
 } // End of SnowyASM class
