@@ -139,7 +139,7 @@
 
 </div>
 
-*overhauling since im drastically changing the core of the mod, abandoning the callmapping anf adopting smarter approach that's better than the current approach*
+*overhauling since im drastically changing the core of the mod, abandoning the callmapping and adopting smarter approach that's better than the current approach*
 
 ---
 
