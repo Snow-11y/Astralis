@@ -23,7 +23,7 @@
 [![Vulkan](https://img.shields.io/badge/Vulkan-1.0--1.4-ac162c?style=flat-square&logo=vulkan&logoColor=white&labelColor=0d1117)](https://vulkan.org)
 [![OpenGL](https://img.shields.io/badge/OpenGL-1.5--4.6-5586a4?style=flat-square&logo=opengl&logoColor=white&labelColor=0d1117)](https://opengl.org)
 [![DirectX](https://img.shields.io/badge/DirectX-9--12%20Ultimate-107c10?style=flat-square&logo=xbox&logoColor=white&labelColor=0d1117)](https://microsoft.com)
-[![Metal](https://img.shields.io/badge/Metal-1.0--3.0-a2aaad?style=flat-square&logo=apple&logoColor=white&labelColor=0d1117)](https://apple.com)
+[![Metal](https://img.shields.io/badge/Metal-2.x--4.x-a2aaad?style=flat-square&logo=apple&logoColor=white&labelColor=0d1117)](https://apple.com)
 [![OpenGL ES](https://img.shields.io/badge/GLES-2.0--3.2-ff9500?style=flat-square&logo=android&logoColor=white&labelColor=0d1117)]([https://khronos.org](https://www.khronos.org/opengles/))
 [![SPIR--V](https://img.shields.io/badge/SPIR--V-1.0--1.6-purple?style=flat-square&logo=khronos&logoColor=white&labelColor=0d1117)]([https://khronos.org](https://www.khronos.org/spirv/))
 [![GLSL](https://img.shields.io/badge/GLSL-1.1--4.60-orange?style=flat-square&logo=opengl&logoColor=white&labelColor=0d1117)](https://www.opengl.org)
@@ -73,11 +73,9 @@
 > 
 > Astralis is currently in **early alpha development**. All documented features are based on implemented code that remains **untested in production environments**. This is primarily a **personal Java learning project** exploring modern graphics programming, JVM optimization, and high-performance computing. 
 > 
-> **Do not use in production environments. Expect breaking changes, instability, and incomplete features.**
+> **Do not use in production environments. UNTIL the first Stable Build**
 > 
-> I'm not experienced with Metal, so supporting latest Metal and MSL (4.x) might not be possible.
->
->### guys, the structures, javadoc of my project are ai-generated, But the code itself is **100% Human Written**, just the javadoc and structures of the file, the skeleton is ai-gen, but the code isn't
+> guys, the structures, javadoc of my project are ai-generated, But the code itself is **100% Human Written**, just the javadoc and structures of the file, the skeleton is ai-gen, but the code isn't
 
 <br/>
 
