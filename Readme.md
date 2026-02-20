@@ -45,9 +45,8 @@
 <table>
 <tr>
 <td align="center">
-<img src="https://img.shields.io/badge/🚀-+1355%25%20FPS-00ff88?style=for-the-badge&labelColor=0d1117"/>
+<img src="https://img.shields.io/badge/🚀%20variable%20gain-Avg%202--4%C3%97%20FPS-00ff88?style=for-the-badge&labelColor=0d1117" alt="Performance Badge"/>
 <br/><sub><b>Peak Performance Gain</b></sub>
-</td>
 <td align="center">
 <img src="https://img.shields.io/badge/🎮-4%20Graphics%20APIs-a855f7?style=for-the-badge&labelColor=0d1117"/>
 <br/><sub><b>Universal Backend</b></sub>
