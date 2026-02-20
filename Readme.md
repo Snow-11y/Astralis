@@ -77,7 +77,7 @@
 > 
 > I'm not experienced with Metal, so supporting latest Metal and MSL (4.x) might not be possible.
 >
->### guys, the structures, javadoc of my project are ai-generated, But the code itself is **100% Human Written**, just thr javadoc and structures of the file, the skeleton is ai gen, but the code isn't
+>### guys, the structures, javadoc of my project are ai-generated, But the code itself is **100% Human Written**, just the javadoc and structures of the file, the skeleton is ai-gen, but the code isn't
 
 <br/>
 
