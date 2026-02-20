@@ -155,7 +155,7 @@ public final class DeepMixAdvancedExtensions {
         MC_1_18("1.18", "1.18.2"),
         MC_1_19("1.19", "1.19.4"),
         MC_1_20("1.20", "1.20.6"),
-        MC_1_21("1.21", "1.21.4"),
+        MC_1_21("1.21", "1.21.10"),
         ALL("1.0", "99.99.99");
 
         private final String from;
@@ -231,15 +231,20 @@ public final class DeepMixAdvancedExtensions {
         API_9("9.x", "1.18.2"),
         API_10("10.x", "1.19.4"),
         API_11("11.x", "1.20.x"),
-        API_12("12.x", "1.21.x");
+        API_12("12.x", "1.21.x"),
+        API_13("13.x", "1.21.2 – 1.21.3"),
+        API_14("14.x", "1.21.4"),
+        API_15("15.x", "1.21.x"),
+        API_16("16.x", "1.21.x"),
+        API_17("17.x", "1.21.5+");
 
         private final String apiVersion;
         private final String mcVersion;
         SpongeAPIVersion(String api, String mc) { this.apiVersion = api; this.mcVersion = mc; }
         public String apiVersion() { return apiVersion; }
         public String mcVersion() { return mcVersion; }
-    }
-
+}
+    
     /** General game engine type */
     public enum GameEngine {
         UNITY,                 // Unity (C#, via JNI/GraalVM)
@@ -261,8 +266,8 @@ public final class DeepMixAdvancedExtensions {
 
     /** Game engine integration mode */
     public enum EngineIntegrationMode {
-        JNI,                   // Java Native Interface
-        FFI,                   // Foreign Function Interface (Java 22+)
+        JNI,                   // Java Native Interface, not recommended
+        FFI,                   // Foreign Function Interface (Java 22+, recommended)
         GRAALVM,               // GraalVM polyglot
         JEP,                   // Java Embedded Python
         PROCESS,               // External process communication
