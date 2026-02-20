@@ -38,7 +38,7 @@ import org.spongepowered.asm.service.MixinService;
 import org.spongepowered.asm.service.mojang.MixinServiceLaunchWrapper;
 import org.spongepowered.asm.util.PrettyPrinter;
 import org.spongepowered.asm.util.asm.ASM;
-import sun.misc.Unsafe;
+import sun.misc.Unsafe; // will be replaced with FFM~ UwU
 
 import java.io.InputStreamReader;
 import java.io.Reader;
