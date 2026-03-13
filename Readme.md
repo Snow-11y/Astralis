@@ -74,7 +74,7 @@
 > 
 > **Do not use in production environments. UNTIL the first Stable Build**
 > 
-> guys, the structures, javadoc of my project are ai-generated, But the code itself is **100% Human Written**, just the javadoc and structures of the file, the skeleton is ai-gen, but the code isn't
+> the project mixes AI and human written code and Javadoc
 
 <br/>
 
