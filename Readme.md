@@ -74,8 +74,7 @@
 > 
 > **Do not use in production environments. UNTIL the first Stable Build**
 > 
-> the project mixes AI and human written code and Javadoc
-
+> currently due to the project scale, i'm mixing Ai Agents (claude code's Team Agents and custom MCP) and my own hand written code
 <br/>
 
 ---
