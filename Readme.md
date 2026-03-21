@@ -74,7 +74,7 @@
 > 
 > **Do not use in production environments. UNTIL the first Stable Build**
 > 
-> currently due to the project scale, i'm mixing Ai Agents (claude code's Team Agents and custom MCP) and my own hand written code
+> currently due to the project scale, i'm mixing Ai Agents (claude code's Team Agents and custom MCP, one opus as a leader and 1-30 or more haiku workers working parallelly, 1-10 sonnet as workers for heavier tasks.) and my own hand written code
 <br/>
 
 ---
