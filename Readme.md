@@ -72,7 +72,7 @@
 > 
 > Astralis is currently in **early alpha development**. All documented features are based on implemented code that remains **untested in production environments**. This is primarily a **personal Java learning project** exploring modern graphics programming, JVM optimization, and high-performance computing. 
 > 
-> **Do not use in production environments. UNTIL the first Stable Build**
+> **Do not use in production environments. UNTIL the first Stable Build** — which would be WSS (**W**inter'**s** **S**table)
 > 
 
 > [!IMPORTANT]
