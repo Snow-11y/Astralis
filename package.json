@@ -1,0 +1,37 @@
+{
+  "name": "snowflake-language",
+  "displayName": "Snowflake ❄️",
+  "description": "Syntax highlighting, color theme, and language support for the Snowflake programming language",
+  "version": "1.0.0",
+  "publisher": "stellar-snow-astralis",
+  "engines": { "vscode": "^1.70.0" },
+  "categories": ["Programming Languages", "Themes"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stellar-snow-astralis/snowflake-vscode"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "snowflake",
+        "aliases": ["Snowflake", "snow"],
+        "extensions": [".snow", ".snx"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "snowflake",
+        "scopeName": "source.snow",
+        "path": "./syntaxes/snowflake.tmLanguage.json"
+      }
+    ],
+    "themes": [
+      {
+        "label": "Snowflake Night",
+        "uiTheme": "vs-dark",
+        "path": "./themes/snowflake-night.json"
+      }
+    ]
+  }
+}

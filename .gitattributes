@@ -1,0 +1,14 @@
+# ❄️ Snowflake language — GitHub Linguist overrides
+# Forces GitHub to recognize .snow and .snx as Snowflake source files.
+# Drop this at the root of any Snowflake project repo.
+
+*.snow  linguist-language=Snowflake linguist-detectable=true
+*.snx   linguist-language=Snowflake linguist-detectable=true
+
+# Ensure diffs are text, not binary
+*.snow  diff=snowflake
+*.snx   diff=snowflake
+
+# Normalize line endings
+*.snow  text eol=lf
+*.snx   text eol=lf
